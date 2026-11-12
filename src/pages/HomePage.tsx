@@ -104,7 +104,6 @@ export function HomePage({
         title={siteTitle}
         description="Resilience by TAO BUTAO, 1.23.25."
         path="/"
-        image="/media/hero-banner.png"
       />
 
       <section className="relative bg-black">

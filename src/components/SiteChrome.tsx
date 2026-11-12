@@ -201,7 +201,7 @@ export function PageMeta({
   title,
   description,
   path,
-  image = "/media/social.png",
+  image = "/og.jpg",
   jsonLd,
 }: {
   title: string;
@@ -226,12 +226,25 @@ export function PageMeta({
       }
       el.content = content;
     };
+    const imageUrl = image.startsWith("http") ? image : `${siteOrigin()}${image}`;
+    const shareCard = image === "/og.jpg";
     set("name", "description", description);
+    set("property", "og:site_name", galleryName);
     set("property", "og:title", title);
     set("property", "og:description", description);
     set("property", "og:type", "website");
     set("property", "og:url", canonical);
-    set("property", "og:image", image.startsWith("http") ? image : `${siteOrigin()}${image}`);
+    set("property", "og:image", imageUrl);
+    set("property", "og:image:alt", title);
+    if (shareCard) {
+      set("property", "og:image:width", "1200");
+      set("property", "og:image:height", "630");
+      set("property", "og:image:type", "image/jpeg");
+    }
+    set("name", "twitter:card", "summary_large_image");
+    set("name", "twitter:title", title);
+    set("name", "twitter:description", description);
+    set("name", "twitter:image", imageUrl);
     let link = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!link) {
       link = document.createElement("link");
