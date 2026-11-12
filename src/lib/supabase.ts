@@ -1,0 +1,14 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+const url = import.meta.env.VITE_SUPABASE_URL;
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabaseConfigured = Boolean(url && anonKey);
+
+export const supabase: SupabaseClient | null = supabaseConfigured
+  ? createClient(url, anonKey)
+  : null;
+
+export function siteOrigin() {
+  return import.meta.env.VITE_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+}
