@@ -3,7 +3,7 @@ import { ArrowLink, PageMeta, TextLink } from "@/components/SiteChrome";
 import { Newsletter } from "@/components/Newsletter";
 import { Reveal, useInView } from "@/components/Reveal";
 import { copyBlocks, copyText } from "@/lib/content";
-import { siteTitle } from "@/data/reference";
+import { galleryLockup, siteTitle } from "@/data/reference";
 import type { Artwork, Exhibition, JournalArticle } from "@/types";
 
 function GallerySlide({ title, href, image }: { title: string; href: string; image: string }) {
@@ -81,7 +81,7 @@ export function HomePage({
   const resilience = articles.find((article) => article.slug === "resilience");
   const blueprint = articles.find((article) => article.slug === "blueprint");
   const text = (key: string, fallback: string) => copyText(copy, key, fallback);
-  const heroTitle = text("home.hero.heading", "Arte\nVista");
+  const heroTitle = text("home.hero.heading", galleryLockup);
   const heroCaption = text("home.hero", "Resilience\nby TAO BUTAO\n1.23.25");
   const onView = copyBlocks(copy, "home.onview", "‘Resilience’\n\nA Solo Exhibition by TAO BUTAO\n\nTAO BUTAO’s ‘Resilience’ transforms the inherent rigidity of metal into a contemplative exploration of struggle, endurance, and transformation. Each crumpled surface becomes a narrative of tension and release, a dialogue between force and surrender. Through Tao’s process, metal—a material often associated with strength and permanence—is reimagined as pliable, vulnerable, and deeply evocative. The folds and creases, simultaneously chaotic and deliberate, serve as metaphors for resilience, capturing the moments where destruction transitions into renewal, and where imperfection becomes a source of beauty.\n\n23 Jan — 09 Feb 2025 · @tao_butao");
   const figures = text("home.stats", "126 | UNIQUE ART WORKS\n38 | FEATURED ARTIST\n24 | YEARS OF EXCELLENCE")

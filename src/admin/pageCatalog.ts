@@ -20,7 +20,7 @@ export const homeSections: PageSection[] = [
     key: "hero",
     title: "Hero",
     fields: [
-      { name: "heading", label: "Lockup", fallback: "Arte\nVista", multiline: true },
+      { name: "heading", label: "Lockup", fallback: "Voxart\nGallery", multiline: true },
       { name: "body", label: "Caption", fallback: "Resilience\nby TAO BUTAO\n1.23.25", multiline: true },
     ],
   },
@@ -207,7 +207,7 @@ export const gallerySections: PageSection[] = [
     title: "Gallery introduction",
     fields: [
       { name: "heading", label: "Heading", fallback: "GALLERY" },
-      { name: "body", label: "Introduction", fallback: "Artists of Arte Vista." },
+      { name: "body", label: "Introduction", fallback: "Artists of Voxartgallery." },
     ],
   },
 ];
@@ -245,5 +245,5 @@ export const settingFields = [
   { key: "footer_tagline", label: "Footer tagline", fallback: "Contemporary Art · Quarterly · Since 1998" },
   { key: "visit_hours", label: "Visit hours, one line each", fallback: "Tue – Fri, 11 – 18\nSat – Sun, 11 – 16\nMon, Closed", multiline: true },
   { key: "footer_credit", label: "Footer credit", fallback: "Designed by Tomiwa Olaide" },
-  { key: "footer_copyright", label: "Copyright line", fallback: "© MMXXVI · Arte Vista" },
+  { key: "footer_copyright", label: "Copyright line", fallback: "© MMXXVI · Voxartgallery" },
 ];

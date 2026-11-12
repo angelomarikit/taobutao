@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useOpenContact } from "@/components/ContactDialog";
-import { contactMailto, galleryName, socialLinks } from "@/data/reference";
+import { contactMailto, galleryLockup, galleryName, socialLinks } from "@/data/reference";
 import { copyText } from "@/lib/content";
 import { siteOrigin } from "@/lib/supabase";
 
@@ -138,7 +138,7 @@ export function Footer({ copy }: { copy?: Record<string, string> }) {
       <div className="flex items-start justify-between gap-[80px] max-[810px]:flex-col max-[810px]:gap-10">
         <div className="max-w-[440px]">
           <p className="h2 text-white">
-            {galleryName.split(" ").map((word, index) => (
+            {galleryLockup.split("\n").map((word, index) => (
               <span key={word}>{index ? <br /> : null}{word}</span>
             ))}
           </p>
@@ -189,7 +189,7 @@ export function Footer({ copy }: { copy?: Record<string, string> }) {
       </div>
       <div className="mt-20 border-t border-white/40 pt-5">
         <div className="flex items-center justify-between gap-6 max-[390px]:flex-col max-[390px]:items-start">
-          <p className="b6">{copyText(copy, "settings.footer_copyright", "© MMXXVI · Arte Vista")}</p>
+          <p className="b6">{copyText(copy, "settings.footer_copyright", "© MMXXVI · Voxartgallery")}</p>
           <p className="b6">{copyText(copy, "settings.footer_credit", "Designed by Tomiwa Olaide")}</p>
         </div>
       </div>

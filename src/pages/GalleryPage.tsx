@@ -46,7 +46,7 @@ export function GalleryPage({ artworks }: { artworks: Artwork[] }) {
       <section className="px-10 pt-[140px] pb-10 max-[810px]:px-5 max-[810px]:pt-[120px]">
         <div className="mx-auto flex w-full max-w-[1800px] items-end justify-between gap-10 max-[810px]:flex-col max-[810px]:items-start">
           <h1 className="h2 text-white">{copyText(copy, "gallery.intro.heading", "GALLERY")}</h1>
-          <p className="b4 max-w-[420px] text-right text-white max-[810px]:text-left">{copyText(copy, "gallery.intro", "Artists of Arte Vista.")}</p>
+          <p className="b4 max-w-[420px] text-right text-white max-[810px]:text-left">{copyText(copy, "gallery.intro", "Artists of Voxartgallery.")}</p>
         </div>
       </section>
       {collections.length ? (

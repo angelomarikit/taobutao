@@ -1,7 +1,8 @@
 ﻿import type { Artist, Artwork, Exhibition, JournalArticle, TeamMember } from "@/types";
 
-export const galleryName = "Arte Vista";
-export const siteTitle = "Arte Vista";
+export const galleryName = "Voxartgallery";
+export const siteTitle = "Voxartgallery";
+export const galleryLockup = "Voxart\nGallery";
 
 export const contactMailto = "mailto:tommydreamchaser@gmail.com";
 
