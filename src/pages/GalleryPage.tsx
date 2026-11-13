@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { Link, useLocation, useOutletContext } from "react-router-dom";
 import { PageMeta } from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
 import { siteTitle } from "@/data/reference";
@@ -22,7 +22,14 @@ function WorkCard({ artwork }: { artwork: Artwork }) {
 
 export function GalleryPage({ artworks }: { artworks: Artwork[] }) {
   const { artists, copy } = useOutletContext<SiteContent>();
+  const { hash } = useLocation();
   const [collections, setCollections] = useState<Array<{ slug: string; title: string; cover_image: string | null }>>([]);
+
+  useEffect(() => {
+    const id = hash.replace("#", "");
+    if (!id) return;
+    document.getElementById(id)?.scrollIntoView({ block: "start" });
+  }, [hash]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -66,7 +73,7 @@ export function GalleryPage({ artworks }: { artworks: Artwork[] }) {
           </div>
         </section>
       ) : null}
-      <section className="px-10 pb-16 max-[810px]:px-5">
+      <section id="artists" className="scroll-mt-28 px-10 pb-16 max-[810px]:px-5">
         <div className="mx-auto w-full max-w-[1800px]">
           <h2 className="h5 text-white">Artists</h2>
           <div className="mt-8 grid grid-cols-3 items-start gap-x-8 gap-y-16 max-[810px]:grid-cols-1">
@@ -84,7 +91,7 @@ export function GalleryPage({ artworks }: { artworks: Artwork[] }) {
           </div>
         </div>
       </section>
-      <section className="px-10 pb-[120px] max-[810px]:px-5 max-[810px]:pb-[100px]">
+      <section id="works" className="scroll-mt-28 px-10 pb-[120px] max-[810px]:px-5 max-[810px]:pb-[100px]">
         {artworks.length ? (
           <div className="mx-auto grid w-full max-w-[1800px] grid-cols-3 items-start gap-x-8 gap-y-16 max-[810px]:grid-cols-1 max-[810px]:gap-y-12">
             {artworks.map((artwork) => (

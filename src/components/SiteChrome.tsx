@@ -1,32 +1,11 @@
-import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useOpenContact } from "@/components/ContactDialog";
-import { contactMailto, galleryLockup, galleryName, socialLinks } from "@/data/reference";
+import { contactMailto, galleryName, socialLinks } from "@/data/reference";
+import { footerFields } from "@/data/footer";
 import { copyText } from "@/lib/content";
 import { siteOrigin } from "@/lib/supabase";
-
-const links = [
-  { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
-  { label: "Gallery", to: "/gallery" },
-  { label: "Journal", to: "/journal" },
-];
-
-function NavItem({ label, to, className }: { label: string; to: string; className: string }) {
-  return (
-    <NavLink className={className} to={to}>
-      {label}
-    </NavLink>
-  );
-}
-
-function SocialLink({ label, href, className }: { label: string; href: string; className: string }) {
-  return (
-    <a className={className} href={href} target="_blank" rel="noreferrer">
-      {label}
-    </a>
-  );
-}
+import type { Artist, Artwork, JournalArticle } from "@/types";
 
 function publicSocials(copy?: Record<string, string>) {
   return [
@@ -35,165 +14,318 @@ function publicSocials(copy?: Record<string, string>) {
   ];
 }
 
-export function Navigation({ copy }: { copy?: Record<string, string> }) {
+export function Navigation({
+  artists = [],
+  artworks = [],
+  articles = [],
+}: {
+  copy?: Record<string, string>;
+  artists?: Artist[];
+  artworks?: Artwork[];
+  articles?: JournalArticle[];
+}) {
   const [open, setOpen] = useState(false);
+  const [galleriesOpen, setGalleriesOpen] = useState(true);
+  const [query, setQuery] = useState("");
   const openContact = useOpenContact();
   const location = useLocation();
-  const socials = publicSocials(copy);
+  const path = location.pathname;
+  const artistHere = path.startsWith("/gallery/artists") || (path === "/gallery" && location.hash === "#artists");
+  const auctionHere = !artistHere && (path === "/gallery" || path.startsWith("/gallery/"));
+  const results = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return [];
+    const found: { label: string; hint: string; to: string }[] = [];
+    for (const artist of artists) {
+      if (artist.name.toLowerCase().includes(needle)) found.push({ label: artist.name, hint: "Artist", to: `/gallery/artists/${artist.slug}` });
+    }
+    for (const artwork of artworks) {
+      if (`${artwork.title} ${artwork.artistName}`.toLowerCase().includes(needle)) found.push({ label: artwork.title, hint: artwork.artistName || "Work", to: `/gallery/${artwork.slug}` });
+    }
+    for (const article of articles) {
+      if (article.title.toLowerCase().includes(needle)) found.push({ label: article.title, hint: "Exhibition", to: `/journal/${article.slug}` });
+    }
+    return found.slice(0, 8);
+  }, [articles, artists, artworks, query]);
 
   useEffect(() => {
     setOpen(false);
-  }, [location.pathname]);
+    setQuery("");
+  }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
+  function reach(action: () => void) {
+    setOpen(false);
+    action();
+  }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-[8] bg-black text-white">
-      <div className="mx-auto hidden h-auto items-center px-10 py-5 min-[1100px]:grid min-[1100px]:grid-cols-3">
-        <nav className="flex items-center gap-[34px]">
-          {links.slice(0, 3).map((link) => (
-            <NavItem key={link.label} {...link} className="label text-white" />
-          ))}
-        </nav>
-        <Link to="/" className="wordmark text-center text-white">
-          {galleryName}
-        </Link>
-        <nav className="flex items-center justify-end gap-5">
-          {links.slice(3).map((link) => (
-            <NavItem key={link.label} {...link} className="label text-white" />
-          ))}
-          <button className="label cursor-pointer border-0 bg-transparent p-0 text-white" type="button" onClick={openContact}>
-            Contact
+    <>
+      <header className="fixed inset-x-0 top-0 z-[8] bg-black text-white">
+        <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center px-5 py-5 min-[1100px]:px-10">
+          <button type="button" className="grid h-11 w-11 place-items-center" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
+            <span className="flex w-[22px] flex-col gap-[5px]">
+              <span className="h-px bg-white" />
+              <span className="h-px bg-white" />
+              <span className="h-px bg-white" />
+            </span>
           </button>
-          {socials.map((link) => (
-            <SocialLink key={link.label} {...link} className="label text-white" />
-          ))}
-        </nav>
-      </div>
-
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center px-5 py-5 min-[1100px]:hidden">
-        <button
-          type="button"
-          className="grid h-11 w-11 place-items-center rounded-full"
-          aria-label="Open menu"
-          onClick={() => setOpen(true)}
-        >
-          <span className="flex w-[22px] flex-col gap-[5px]">
-            <span className="h-px bg-white" />
-            <span className="h-px bg-white" />
-            <span className="h-px bg-white" />
-          </span>
-        </button>
-        <Link to="/" className="wordmark truncate text-center text-[22px] text-white">
-          {galleryName}
-        </Link>
-        <span className="h-11 w-11" />
-      </div>
-
-      <div hidden={!open} className={`nav-overlay absolute inset-x-0 top-0 h-screen bg-black px-7 pt-7 pb-14 ${open ? "is-open" : ""}`}>
-        <div className="grid grid-cols-[44px_1fr_44px] items-center">
-          <button
-            type="button"
-            className="grid h-11 w-11 place-items-center rounded-full text-white"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-          >
-            <span className="text-[22px] leading-none">×</span>
-          </button>
-          <Link to="/" className="wordmark text-center text-white">
+          <Link to="/" className="wordmark truncate text-center text-[22px] text-white min-[1100px]:text-[30px]">
             {galleryName}
           </Link>
-          <span />
+          <Link to="/admin" className="grid h-11 w-11 place-items-center justify-self-end" aria-label="Sign in" style={{ color: "#fff" }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M5.2 19.4c1.5-3.2 3.8-4.6 6.8-4.6s5.3 1.4 6.8 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+          </Link>
         </div>
-        <nav className="mt-14 flex flex-col items-start gap-[22px]">
-          <Link className="h2 text-white" to="/">Home</Link>
-          <Link className="h2 text-white" to="/about">About</Link>
-          <Link className="h2 text-white" to="/gallery">Gallery</Link>
-          <Link className="h2 text-white" to="/journal">journal</Link>
-          <Link className="h2 text-white" to="/journal">Journal</Link>
-          <button className="h2 cursor-pointer border-0 bg-transparent p-0 text-left text-white" type="button" onClick={() => { setOpen(false); openContact(); }}>
-            Contact
+      </header>
+
+      <div className={`site-menu-backdrop ${open ? "is-open" : ""}`} onClick={() => setOpen(false)} />
+      <aside className={`site-menu ${open ? "is-open" : ""}`} aria-hidden={!open} inert={!open} style={{ color: "#1c1c1c" }}>
+        <div className="flex items-center justify-between px-6 pt-6">
+          <p className="text-[22px] font-medium tracking-[-0.03em]" style={{ fontFamily: "Inter, sans-serif", color: "#1c1c1c" }}>{galleryName}</p>
+          <button type="button" className="grid h-10 w-10 place-items-center text-[28px] leading-none" style={{ color: "#1c1c1c" }} aria-label="Close menu" onClick={() => setOpen(false)}>
+            ×
           </button>
-          {socials.map((link) => (
-            <SocialLink key={link.label} {...link} className="h2 text-white" />
-          ))}
+        </div>
+        <div className="px-6 pt-4">
+          <label className="flex items-center gap-2 rounded-md border px-3 py-2" style={{ borderColor: "#d9d9d9" }}>
+            <span className="sr-only">Search</span>
+            <input
+              className="w-full bg-transparent text-sm outline-none"
+              style={{ color: "#1c1c1c" }}
+              placeholder="Search artists, works, exhibitions"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="#1c1c1c" strokeWidth="1.4">
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="M10.5 10.5 14 14" />
+            </svg>
+          </label>
+          {query.trim() ? (
+            <div className="mt-2 max-h-40 overflow-y-auto border" style={{ borderColor: "#ececec" }}>
+              {results.length ? results.map((result) => (
+                <Link key={`${result.to}-${result.label}`} className="block px-3 py-2 text-sm" style={{ color: "#1c1c1c" }} to={result.to}>
+                  <span className="block">{result.label}</span>
+                  <span className="text-xs" style={{ color: "#8a8a8a" }}>{result.hint}</span>
+                </Link>
+              )) : <p className="px-3 py-2 text-sm" style={{ color: "#8a8a8a" }}>No results</p>}
+            </div>
+          ) : null}
+        </div>
+        <nav className="mt-4 flex-1 overflow-y-auto pb-4">
+          <MenuLink to="/" active={path === "/"}>Home</MenuLink>
+          <MenuLink to="/gallery#works" active={auctionHere}>Auctions</MenuLink>
+          <MenuLink to="/journal" active={path.startsWith("/journal")}>Exhibition</MenuLink>
+          <MenuLink to="/gallery#artists" active={artistHere}>Artist</MenuLink>
+          <button type="button" className="flex w-full items-center justify-between px-6 py-3 text-left text-[13px] font-semibold tracking-[0.12em] uppercase" style={{ color: "#1c1c1c" }} aria-expanded={galleriesOpen} onClick={() => setGalleriesOpen((current) => !current)}>
+            Galleries
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ transform: galleriesOpen ? "rotate(0deg)" : "rotate(-90deg)" }}>
+              <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="#1c1c1c" strokeWidth="1.4" />
+            </svg>
+          </button>
+          {galleriesOpen ? (
+            <div className="pb-2">
+              <SubLink to="/about" active={path.startsWith("/about")}>About us</SubLink>
+              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>Contact us</button>
+              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>How to buy</button>
+              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>How to sell</button>
+              <SubLink to="/about" active={false}>FAQ</SubLink>
+            </div>
+          ) : null}
         </nav>
-      </div>
-    </header>
+        <div className="px-6 pt-4 pb-6">
+          <Link className="block py-3 text-center text-sm font-medium" style={{ background: "#111", color: "#fff" }} to="/admin">Sign In</Link>
+        </div>
+      </aside>
+    </>
   );
 }
 
-const footerSections = [
-  ["Home", "/"],
-  ["About", "/about"],
-  ["Gallery", "/gallery"],
-  ["Journal", "/journal"],
+function MenuLink({ to, active, children }: { to: string; active: boolean; children: string }) {
+  return (
+    <Link className="block px-6 py-3 text-[13px] font-semibold tracking-[0.12em] uppercase" style={{ color: "#1c1c1c", background: active ? "#ededed" : "transparent" }} to={to}>
+      {children}
+    </Link>
+  );
+}
+
+function SubLink({ to, active, children }: { to: string; active: boolean; children: string }) {
+  return (
+    <Link className="block px-6 py-2.5 text-[15px]" style={{ color: "#8a8a8a", background: active ? "#f6f6f6" : "transparent" }} to={to}>
+      {children}
+    </Link>
+  );
+}
+
+const exploreRoutes = [
+  ["footer_link_auctions", "/gallery#works"],
+  ["footer_link_exhibitions", "/journal"],
+  ["footer_link_artists", "/gallery#artists"],
+  ["footer_link_stories", "/journal"],
+  ["footer_link_galleries", "/gallery"],
 ] as const;
+
+const serviceKeys = ["footer_link_buy", "footer_link_sell", "footer_link_estimate", "footer_link_contact"] as const;
 
 export function Footer({ copy }: { copy?: Record<string, string> }) {
   const openContact = useOpenContact();
-  const mailto = copyText(copy, "settings.contact_mailto", contactMailto);
-  const hours = copyText(copy, "settings.visit_hours", "Tue – Fri, 11 – 18\nSat – Sun, 11 – 16\nMon, Closed").split("\n").filter(Boolean);
+  function field(key: string) {
+    const found = footerFields.find((item) => item.key === key);
+    return copyText(copy, `settings.${key}`, found?.fallback ?? "");
+  }
+  const email = field("contact_email").replace(/^mailto:/, "");
+  const mailValue = field("contact_mailto").trim();
+  const mailto = mailValue.startsWith("mailto:") ? mailValue : `mailto:${mailValue || email || contactMailto.replace(/^mailto:/, "")}`;
+  const phone = field("contact_phone");
+  const address = field("gallery_address");
+  const hours = field("visit_hours").split("\n").map((line) => line.trim()).filter(Boolean);
+  const intro = field("footer_tagline");
   const socials = publicSocials(copy);
+  const labelStyle = { color: "#d0d0d0" };
+  const linkStyle = { color: "#fff" };
+
+  function socialRow() {
+    return (
+      <div className="flex gap-4">
+        {socials.map((link) => (
+          <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} className="grid h-8 w-8 place-items-center" style={linkStyle}>
+            {link.label === "Facebook" ? <FacebookIcon /> : <InstagramIcon />}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  function exploreList() {
+    return (
+      <ul className="mt-5 space-y-3 text-[15px]">
+        {exploreRoutes.map(([key, to]) => (
+          <li key={key}><Link style={linkStyle} to={to}>{field(key)}</Link></li>
+        ))}
+      </ul>
+    );
+  }
+
+  function servicesList() {
+    return (
+      <ul className="mt-5 space-y-3 text-[15px]">
+        {serviceKeys.map((key) => (
+          <li key={key}>
+            <button className="cursor-pointer border-0 bg-transparent p-0 text-left" style={linkStyle} type="button" onClick={openContact}>{field(key)}</button>
+          </li>
+        ))}
+        <li><Link style={linkStyle} to="/about">{field("footer_link_faq")}</Link></li>
+        <li><Link style={linkStyle} to="/about">{field("footer_link_about")}</Link></li>
+      </ul>
+    );
+  }
+
+  function addressBlock() {
+    return (
+      <>
+        {address.split("\n").map((line) => <p key={line} className="mt-1">{line}</p>)}
+        {phone ? <p className="mt-1">{phone}</p> : null}
+      </>
+    );
+  }
+
   return (
-    <footer className="bg-black px-10 pt-[100px] pb-5 text-white max-[810px]:px-5">
-      <div className="flex items-start justify-between gap-[80px] max-[810px]:flex-col max-[810px]:gap-10">
-        <div className="max-w-[440px]">
-          <p className="h2 text-white">
-            {galleryLockup.split("\n").map((word, index) => (
-              <span key={word}>{index ? <br /> : null}{word}</span>
-            ))}
-          </p>
-          <p className="b5 mt-6 text-white">{copyText(copy, "settings.footer_tagline", "Contemporary Art · Quarterly · Since 1998")}</p>
-          <p className="b6 mt-8 text-white">{copyText(copy, "settings.gallery_address", "Bredgade 41, Copenhagen K. Admission free; quiet appreciated.")}</p>
+    <footer className="bg-black px-8 pt-16 pb-8 text-white max-[810px]:px-5 min-[1100px]:px-16" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="min-[1100px]:hidden">
+        <p className="max-w-[760px] text-[15px] leading-7" style={{ color: "#f2f2f2" }}>
+          {intro}
+        </p>
+        <div className="mt-8">{socialRow()}</div>
+        <div className="mt-14 grid max-w-[640px] grid-cols-2 gap-x-16 gap-y-10 max-[390px]:grid-cols-1">
+          <div>
+            <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_explore_label")}</p>
+            {exploreList()}
+          </div>
+          <div>
+            <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_services_label")}</p>
+            {servicesList()}
+          </div>
         </div>
-        <div className="grid flex-1 grid-cols-4 gap-10 max-[810px]:grid-cols-1">
+        <div className="mt-16 max-w-[360px] space-y-8 text-[15px] leading-7">
           <div>
-            <p className="b5 text-white">SECTIONS</p>
-            <ul className="mt-6 space-y-3">
-              {footerSections.map(([label, to]) => (
-                <li key={label}>
-                  <Link className="footer-link b6 text-white" to={to}>{label}</Link>
-                </li>
-              ))}
-              <li>
-                <button className="footer-link b6 cursor-pointer border-0 bg-transparent p-0 text-left text-white" type="button" onClick={openContact}>
-                  Contact
-                </button>
-              </li>
-            </ul>
+            <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_visit_label")}</p>
+            {addressBlock()}
           </div>
           <div>
-            <p className="b5 text-white">CORRESPONDENCE</p>
-            <ul className="mt-6 space-y-3">
-              <li><a className="footer-link b6" href={mailto}>{copyText(copy, "settings.contact_email", "post@novumgallery.com")}</a></li>
-              <li><a className="footer-link b6" href={mailto}>{copyText(copy, "settings.press_email", "press@novumgallery.com")}</a></li>
-              <li><span className="footer-link b6">{copyText(copy, "settings.contact_phone", "+45 33 14 22 08")}</span></li>
-            </ul>
+            <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_enquiries_label")}</p>
+            <p className="mt-1"><a style={linkStyle} href={mailto}>{email}</a></p>
           </div>
           <div>
-            <p className="b5 text-white">VISIT</p>
-            <ul className="mt-6 space-y-3">
-              {hours.map((line) => <li key={line} className="b6">{line}</li>)}
-            </ul>
-          </div>
-          <div>
-            <p className="b5 text-white">SOCIAL</p>
-            <ul className="mt-6 space-y-3">
-              {socials.map((link) => (
-                <li key={link.label}>
-                  <SocialLink {...link} className="footer-link b6 text-white" />
-                </li>
-              ))}
-            </ul>
+            <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_hours_label")}</p>
+            {hours.map((line) => <p key={line} className="mt-1">{line}</p>)}
           </div>
         </div>
       </div>
-      <div className="mt-20 border-t border-white/40 pt-5">
-        <div className="flex items-center justify-between gap-6 max-[390px]:flex-col max-[390px]:items-start">
-          <p className="b6">{copyText(copy, "settings.footer_copyright", "© MMXXVI · Voxartgallery")}</p>
-          <p className="b6">{copyText(copy, "settings.footer_credit", "Designed by Tomiwa Olaide")}</p>
+
+      <div className="hidden items-start gap-x-12 min-[1100px]:grid min-[1100px]:grid-cols-[minmax(280px,1.35fr)_minmax(140px,0.7fr)_minmax(160px,0.75fr)_minmax(220px,0.95fr)]">
+        <div>
+          <p className="wordmark">{field("footer_name")}</p>
+          <p className="mt-6 max-w-[420px] text-[15px] leading-7" style={{ color: "#f2f2f2" }}>{intro}</p>
+          <div className="mt-8">{socialRow()}</div>
         </div>
+        <div>
+          <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_explore_label")}</p>
+          {exploreList()}
+        </div>
+        <div>
+          <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_services_label")}</p>
+          {servicesList()}
+        </div>
+        <div className="text-[15px] leading-7">
+          <p className="text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_client_label")}</p>
+          <div className="mt-5">{addressBlock()}</div>
+          <p className="mt-6 text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_enquiries_label")}</p>
+          <p className="mt-2"><a style={linkStyle} href={mailto}>{email}</a></p>
+          <p className="mt-6 text-[11px] tracking-[0.22em] uppercase" style={labelStyle}>{field("footer_hours_label")}</p>
+          {hours.map((line) => <p key={line} className="mt-2">{line}</p>)}
+        </div>
+      </div>
+
+      <div className="mt-16 flex flex-wrap gap-x-8 gap-y-2 border-t border-white/20 pt-5 pr-40 text-[13px]">
+        <p>{field("footer_copyright")}</p>
+        <p>{field("footer_credit")}</p>
       </div>
     </footer>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+      <path d="M9.2 14V8.7h1.8l.3-2H9.2V5.4c0-.6.2-1 1-1H11.4V2.6c-.3 0-.9-.1-1.7-.1-1.7 0-2.8 1-2.8 2.9v1.3H5.2v2h1.7V14h2.3Z" />
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.3">
+      <rect x="2.5" y="2.5" width="11" height="11" rx="3" />
+      <circle cx="8" cy="8" r="2.4" />
+      <circle cx="11.3" cy="4.7" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 

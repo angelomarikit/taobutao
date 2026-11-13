@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from "react-router-dom";
 import { ContactProvider } from "@/components/ContactDialog";
+import { GalleryAssistant } from "@/components/GalleryAssistant";
 import { Footer, Navigation } from "@/components/SiteChrome";
 import { useSiteContent } from "@/lib/content";
 import { AboutPage } from "@/pages/AboutPage";
@@ -23,11 +24,12 @@ function PublicShell() {
   }, [pathname]);
   return (
     <ContactProvider copy={state.content.copy}>
-      <Navigation copy={state.content.copy} />
+      <Navigation copy={state.content.copy} artists={state.content.artists} artworks={state.content.artworks} articles={state.content.articles} />
       <div className="page-enter">
         <Outlet context={state.content} />
       </div>
       <Footer copy={state.content.copy} />
+      <GalleryAssistant copy={state.content.copy} />
     </ContactProvider>
   );
 }

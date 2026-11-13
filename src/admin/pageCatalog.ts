@@ -234,16 +234,6 @@ export const contactSections: PageSection[] = [
   },
 ];
 
-export const settingFields = [
-  { key: "instagram_url", label: "Instagram URL", fallback: "https://www.instagram.com/tao_butao" },
-  { key: "facebook_url", label: "Facebook URL", fallback: "https://www.facebook.com/taobutao82" },
-  { key: "contact_email", label: "Footer email", fallback: "post@novumgallery.com" },
-  { key: "press_email", label: "Press email", fallback: "press@novumgallery.com" },
-  { key: "contact_phone", label: "Phone", fallback: "+45 33 14 22 08" },
-  { key: "contact_mailto", label: "Email address that receives the footer mail links", fallback: "mailto:tommydreamchaser@gmail.com" },
-  { key: "gallery_address", label: "Address", fallback: "Bredgade 41, Copenhagen K. Admission free; quiet appreciated.", multiline: true },
-  { key: "footer_tagline", label: "Footer tagline", fallback: "Contemporary Art · Quarterly · Since 1998" },
-  { key: "visit_hours", label: "Visit hours, one line each", fallback: "Tue – Fri, 11 – 18\nSat – Sun, 11 – 16\nMon, Closed", multiline: true },
-  { key: "footer_credit", label: "Footer credit", fallback: "Designed by Tomiwa Olaide" },
-  { key: "footer_copyright", label: "Copyright line", fallback: "© MMXXVI · Voxartgallery" },
+export const settingFields: { key: string; label: string; fallback: string; multiline?: boolean }[] = [
+  { key: "press_email", label: "Press email", fallback: "tommydreamchaser@gmail.com" },
 ];

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "re
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { galleryName, socialLinks } from "@/data/reference";
 import { ArtistsAdmin } from "@/admin/ArtistsAdmin";
+import { AssistantAdmin } from "@/admin/AssistantAdmin";
+import { FooterAdmin } from "@/admin/FooterAdmin";
 import { PageEditor, ChooseFile } from "@/admin/PageEditor";
 import { aboutSections, contactSections, gallerySections, homeSections, journalSections, settingFields } from "@/admin/pageCatalog";
 import { siteOrigin, supabase, supabaseConfigured } from "@/lib/supabase";
@@ -84,8 +86,10 @@ const navIcon = {
   gallery: "M4 6h16v12H4zM4 15l4-4 3 3 2-2 5 5",
   journal: "M7 4h10a1 1 0 0 1 1 1v14l-6-3-6 3V5a1 1 0 0 1 1-1Z",
   mail: "M4 6h16v12H4zM4 7l8 6 8-6",
+  assistant: "M5 16.5V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6A2.5 2.5 0 0 1 16.5 15H9l-4 3.5Z",
   media: "M4 6h16v12H4zM9 10h.01M9 14l2.5-2.5L15 15",
   settings: "M12 15.5a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 12 15.5ZM12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4",
+  footer: "M4 5h16M4 10h16M4 15h10M4 20h16",
 };
 
 function SideLink({ to, end, children }: { to: string; end?: boolean; children: ReactNode }) {
@@ -147,7 +151,9 @@ function Shell({
             ) : null}
             <SideLink to="/admin/journal"><Icon d={navIcon.journal} />Journal</SideLink>
             <SideLink to="/admin/inquiries"><Icon d={navIcon.mail} />Contact / Enquiries</SideLink>
+            <SideLink to="/admin/assistant"><Icon d={navIcon.assistant} />Assistant</SideLink>
             <SideLink to="/admin/media"><Icon d={navIcon.media} />Media Library</SideLink>
+            <SideLink to="/admin/footer"><Icon d={navIcon.footer} />Footer</SideLink>
             <SideLink to="/admin/settings"><Icon d={navIcon.settings} />Site Settings</SideLink>
           </nav>
           <div className="mt-auto flex items-center gap-3 px-2 pt-8">
@@ -1066,7 +1072,7 @@ function Settings() {
     }));
     const { error: saveError } = await supabase!.from("site_settings").upsert(rows, { onConflict: "key" });
     if (saveError) setError(saveError.message);
-    else setNotice("Site settings are live in the navigation and footer.");
+    else setNotice("Press email is saved.");
   }
 
   return (
@@ -1074,7 +1080,7 @@ function Settings() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl">Site Settings</h1>
-          <p className="mt-2 max-w-2xl text-sm text-neutral-400">These values appear in the public navigation, footer, and mail links.</p>
+          <p className="mt-2 max-w-2xl text-sm text-neutral-400">Footer text, address, hours, and social links are edited on the Footer page.</p>
         </div>
         <Link className="rounded-full border border-white/15 px-4 py-2 text-sm" to="/">View page</Link>
       </div>
@@ -1128,6 +1134,8 @@ export function AdminApp() {
         <Route path="exhibitions" element={<CollectionEditor table="exhibitions" title="Exhibitions" fields={["title", "slug", "description", "cover_image", "start_date", "end_date", "location", "status"]} />} />
         <Route path="journal" element={<JournalAdmin />} />
         <Route path="inquiries" element={<ContactAdmin />} />
+        <Route path="assistant" element={<AssistantAdmin />} />
+        <Route path="footer" element={<FooterAdmin />} />
         <Route path="media" element={<MediaLibrary />} />
         <Route path="settings" element={<Settings />} />
       </Routes>
