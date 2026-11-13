@@ -145,6 +145,14 @@ textarea {
   text-transform: uppercase;
 }
 
+.brand-mark {
+  display: block;
+  aspect-ratio: 368 / 234;
+  background-color: currentColor;
+  -webkit-mask: url("/media/logo.png") center / contain no-repeat;
+  mask: url("/media/logo.png") center / contain no-repeat;
+}
+
 @media (min-width: 810px) {
   .h1 {
     font-size: 80px;

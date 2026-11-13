@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { BrandMark } from "@/components/BrandMark";
 import { useOpenContact } from "@/components/ContactDialog";
 import { contactMailto, galleryName, socialLinks } from "@/data/reference";
 import { footerFields } from "@/data/footer";
@@ -88,8 +89,8 @@ export function Navigation({
               <span className="h-px bg-white" />
             </span>
           </button>
-          <Link to="/" className="wordmark truncate text-center text-[22px] text-white min-[1100px]:text-[30px]">
-            {galleryName}
+          <Link to="/" className="grid place-items-center text-white" aria-label={galleryName}>
+            <BrandMark className="h-9 min-[1100px]:h-11" />
           </Link>
           <Link to="/admin" className="grid h-11 w-11 place-items-center justify-self-end" aria-label="Sign in" style={{ color: "#fff" }}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -103,7 +104,9 @@ export function Navigation({
       <div className={`site-menu-backdrop ${open ? "is-open" : ""}`} onClick={() => setOpen(false)} />
       <aside className={`site-menu ${open ? "is-open" : ""}`} aria-hidden={!open} inert={!open} style={{ color: "#1c1c1c" }}>
         <div className="flex items-center justify-between px-6 pt-6">
-          <p className="text-[22px] font-medium tracking-[-0.03em]" style={{ fontFamily: "Inter, sans-serif", color: "#1c1c1c" }}>{galleryName}</p>
+          <Link to="/" aria-label={galleryName} onClick={() => setOpen(false)}>
+            <BrandMark className="h-9" />
+          </Link>
           <button type="button" className="grid h-10 w-10 place-items-center text-[28px] leading-none" style={{ color: "#1c1c1c" }} aria-label="Close menu" onClick={() => setOpen(false)}>
             ×
           </button>
@@ -254,6 +257,9 @@ export function Footer({ copy }: { copy?: Record<string, string> }) {
   return (
     <footer className="bg-black px-8 pt-16 pb-8 text-white max-[810px]:px-5 min-[1100px]:px-16" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="min-[1100px]:hidden">
+        <Link to="/" aria-label={galleryName} className="mb-8 inline-block text-white">
+          <BrandMark className="h-12" />
+        </Link>
         <p className="max-w-[760px] text-[15px] leading-7" style={{ color: "#f2f2f2" }}>
           {intro}
         </p>
@@ -286,7 +292,9 @@ export function Footer({ copy }: { copy?: Record<string, string> }) {
 
       <div className="hidden items-start gap-x-12 min-[1100px]:grid min-[1100px]:grid-cols-[minmax(280px,1.35fr)_minmax(140px,0.7fr)_minmax(160px,0.75fr)_minmax(220px,0.95fr)]">
         <div>
-          <p className="wordmark">{field("footer_name")}</p>
+          <Link to="/" aria-label={galleryName} className="inline-block text-white">
+            <BrandMark className="h-14" />
+          </Link>
           <p className="mt-6 max-w-[420px] text-[15px] leading-7" style={{ color: "#f2f2f2" }}>{intro}</p>
           <div className="mt-8">{socialRow()}</div>
         </div>

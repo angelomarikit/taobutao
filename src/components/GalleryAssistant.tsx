@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { BrandMark } from "@/components/BrandMark";
 import { assistantButton, assistantGreeting, assistantPlaceholder, matchTopic, readTopics } from "@/data/assistant";
 import { copyText } from "@/lib/content";
 import { galleryName } from "@/data/reference";
@@ -37,7 +38,9 @@ export function GalleryAssistant({ copy }: { copy?: Record<string, string> }) {
       {open ? (
         <section className="flex max-h-[min(640px,78vh)] w-[380px] flex-col overflow-hidden rounded-[28px] bg-[#f4f4f5] shadow-[0_20px_60px_rgba(0,0,0,0.35)] max-[810px]:w-full" style={{ color: "#1c1c1c", fontFamily: "Inter, sans-serif" }}>
           <header className="flex items-center gap-3 bg-white px-4 py-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-black text-sm font-semibold" style={{ color: "#fff" }}>V</span>
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-black" style={{ color: "#fff" }} aria-hidden="true">
+              <BrandMark className="h-5" />
+            </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[13px] font-semibold tracking-[0.08em] uppercase">{galleryName}</span>
               <span className="mt-0.5 flex items-center gap-1.5 text-xs" style={{ color: "#666" }}>
@@ -72,7 +75,9 @@ export function GalleryAssistant({ copy }: { copy?: Record<string, string> }) {
         </section>
       ) : null}
       <button type="button" className="flex items-center gap-2 rounded-full bg-white py-1.5 pr-4 pl-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.28)]" style={{ color: "#1c1c1c" }} onClick={() => setOpen((current) => !current)}>
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-black text-sm font-semibold" style={{ color: "#fff" }}>V</span>
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-black" style={{ color: "#fff" }} aria-hidden="true">
+          <BrandMark className="h-5" />
+        </span>
         <span className="text-sm font-medium">{open ? "Close" : button}</span>
       </button>
     </div>
