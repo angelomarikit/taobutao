@@ -3,7 +3,10 @@
   <url><loc>/</loc></url>
   <url><loc>/about</loc></url>
   <url><loc>/gallery</loc></url>
+  <url><loc>/gallery/artists</loc></url>
   <url><loc>/journal</loc></url>
+  <url><loc>/auctions</loc></url>
+  <url><loc>/exhibitions</loc></url>
   <url><loc>/gallery/relief-01</loc></url>
   <url><loc>/gallery/relief-02</loc></url>
   <url><loc>/gallery/relief-03</loc></url>

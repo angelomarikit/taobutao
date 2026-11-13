@@ -5,10 +5,15 @@ import { GalleryAssistant } from "@/components/GalleryAssistant";
 import { Footer, Navigation } from "@/components/SiteChrome";
 import { useSiteContent } from "@/lib/content";
 import { AboutPage } from "@/pages/AboutPage";
+import { AuctionsPage } from "@/pages/AuctionsPage";
+import { AuctionPage } from "@/pages/AuctionPage";
 import { ArticlePage } from "@/pages/ArticlePage";
 import { ArtworkPage } from "@/pages/ArtworkPage";
+import { ArtistsPage } from "@/pages/ArtistsPage";
 import { ArtistPage } from "@/pages/ArtistPage";
 import { CollectionPage } from "@/pages/CollectionPage";
+import { ExhibitionsPage } from "@/pages/ExhibitionsPage";
+import { ExhibitionPage } from "@/pages/ExhibitionPage";
 import { GalleryPage } from "@/pages/GalleryPage";
 import { HomePage } from "@/pages/HomePage";
 import { JournalPage } from "@/pages/JournalPage";
@@ -24,7 +29,7 @@ function PublicShell() {
   }, [pathname]);
   return (
     <ContactProvider copy={state.content.copy}>
-      <Navigation copy={state.content.copy} artists={state.content.artists} artworks={state.content.artworks} articles={state.content.articles} />
+      <Navigation copy={state.content.copy} artists={state.content.artists} artworks={state.content.artworks} articles={state.content.articles} exhibitions={state.content.exhibitions} />
       <div className="page-enter">
         <Outlet context={state.content} />
       </div>
@@ -78,9 +83,14 @@ export function App() {
         <Route index element={<HomeRoute />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="gallery" element={<GalleryRoute />} />
+        <Route path="gallery/artists" element={<ArtistsPage />} />
         <Route path="gallery/artists/:slug" element={<ArtistPage />} />
         <Route path="gallery/collections/:slug" element={<CollectionPage />} />
         <Route path="gallery/:slug" element={<ArtworkRoute />} />
+        <Route path="auctions" element={<AuctionsPage />} />
+        <Route path="auctions/:slug" element={<AuctionPage />} />
+        <Route path="exhibitions" element={<ExhibitionsPage />} />
+        <Route path="exhibitions/:slug" element={<ExhibitionPage />} />
         <Route path="journal" element={<JournalRoute />} />
         <Route path="journal/:slug" element={<ArticleRoute />} />
         <Route path="404" element={<NotFoundPage />} />

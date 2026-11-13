@@ -21,7 +21,7 @@ function WorkCard({ artwork }: { artwork: Artwork }) {
 }
 
 export function GalleryPage({ artworks }: { artworks: Artwork[] }) {
-  const { artists, copy } = useOutletContext<SiteContent>();
+  const { copy } = useOutletContext<SiteContent>();
   const { hash } = useLocation();
   const [collections, setCollections] = useState<Array<{ slug: string; title: string; cover_image: string | null }>>([]);
 
@@ -73,24 +73,6 @@ export function GalleryPage({ artworks }: { artworks: Artwork[] }) {
           </div>
         </section>
       ) : null}
-      <section id="artists" className="scroll-mt-28 px-10 pb-16 max-[810px]:px-5">
-        <div className="mx-auto w-full max-w-[1800px]">
-          <h2 className="h5 text-white">Artists</h2>
-          <div className="mt-8 grid grid-cols-3 items-start gap-x-8 gap-y-16 max-[810px]:grid-cols-1">
-            {artists.map((artist) => (
-              <article key={artist.id} className="flex flex-col gap-4">
-                <Link to={`/gallery/artists/${artist.slug}`} className="block bg-white">
-                  {artist.image ? <img className="block h-auto w-full" src={artist.image} alt={artist.imageAlt || artist.name} /> : <span className="block min-h-40" />}
-                </Link>
-                <div className="flex flex-col gap-2">
-                  <h3 className="h5 text-white">{artist.name}</h3>
-                  <p className="b6 text-white">Artist</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
       <section id="works" className="scroll-mt-28 px-10 pb-[120px] max-[810px]:px-5 max-[810px]:pb-[100px]">
         {artworks.length ? (
           <div className="mx-auto grid w-full max-w-[1800px] grid-cols-3 items-start gap-x-8 gap-y-16 max-[810px]:grid-cols-1 max-[810px]:gap-y-12">

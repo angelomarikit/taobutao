@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { referenceArtists, referenceArticles, referenceArtworks, referenceEvents } from "@/data/reference";
 import { supabase, supabaseConfigured } from "@/lib/supabase";
-import type { Artist, Artwork, Exhibition, GalleryCollection, JournalArticle, RichBlock, SiteContent } from "@/types";
+import type { Artist, Artwork, Auction, Exhibition, GalleryCollection, JournalArticle, RichBlock, SiteContent } from "@/types";
 
 type LoadState = {
   status: "loading" | "ready" | "error";
@@ -15,6 +15,7 @@ const referenceContent: SiteContent = {
   artists: referenceArtists,
   articles: referenceArticles,
   exhibitions: referenceEvents,
+  auctions: [],
   collections: [],
   copy: {},
 };
@@ -37,6 +38,41 @@ async function loadArtists(): Promise<Artist[]> {
   }));
   const slugs = new Set(published.map((artist) => artist.slug));
   return [...published, ...referenceArtists.filter((artist) => !slugs.has(artist.slug))];
+}
+
+function mapExhibition(row: {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  cover_image: string | null;
+  location: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  status: string | null;
+}): Exhibition {
+  const date = row.start_date ? new Date(row.start_date) : null;
+  const status = row.status === "current" || row.status === "upcoming" || row.status === "past" ? row.status : "past";
+  return {
+    id: row.id,
+    slug: row.slug,
+    day: date ? String(date.getUTCDate()) : "",
+    when: date ? date.toLocaleString("en-US", { month: "long", timeZone: "UTC" }).toUpperCase() : "",
+    title: row.title,
+    description: row.description || "",
+    location: row.location || "",
+    link: "mailto:tommydreamchaser@gmail.com",
+    image: row.cover_image || "",
+    imageAlt: row.title,
+    startDate: row.start_date || "",
+    endDate: row.end_date || "",
+    status,
+  };
+}
+
+function mergeExhibitions(published: Exhibition[]) {
+  const slugs = new Set(published.map((exhibition) => exhibition.slug));
+  return [...published, ...referenceEvents.filter((exhibition) => !slugs.has(exhibition.slug))];
 }
 
 function asBlocks(value: unknown): RichBlock[] {
@@ -66,8 +102,44 @@ export function copyBlocks(copy: Record<string, string> | undefined, key: string
   return copyText(copy, key, fallback).split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
 }
 
-async function loadPublishedExtras(): Promise<{ collections: GalleryCollection[]; copy: Record<string, string> }> {
-  const empty = { collections: [] as GalleryCollection[], copy: {} as Record<string, string> };
+async function loadAuctions(): Promise<Auction[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("auctions")
+    .select("id,title,slug,description,cover_image,location,start_date,end_date,status,auction_lots(id,lot_number,artist_name,title,image_url,price,currency,display_order)")
+    .eq("published", true)
+    .order("start_date", { ascending: false });
+  if (error || !data) return [];
+  return data.map((row) => {
+    const status = row.status === "live" || row.status === "upcoming" || row.status === "previous" ? row.status : "upcoming";
+    const lots = [...(row.auction_lots ?? [])]
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.lot_number - b.lot_number)
+      .map((lot) => ({
+        id: lot.id,
+        lotNumber: lot.lot_number,
+        artistName: lot.artist_name || "",
+        title: lot.title,
+        image: lot.image_url || "",
+        price: lot.price == null ? null : Number(lot.price),
+        currency: lot.currency || "PHP",
+      }));
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description || "",
+      image: row.cover_image || "",
+      location: row.location || "",
+      startDate: row.start_date || "",
+      endDate: row.end_date || "",
+      status,
+      lots,
+    };
+  });
+}
+
+async function loadPublishedExtras(): Promise<{ collections: GalleryCollection[]; copy: Record<string, string>; auctions: Auction[] }> {
+  const empty = { collections: [] as GalleryCollection[], copy: {} as Record<string, string>, auctions: [] as Auction[] };
   if (!supabase) return empty;
 
   const [collectionsResult, sectionsResult, settingsResult] = await Promise.all([
@@ -131,7 +203,7 @@ async function loadPublishedExtras(): Promise<{ collections: GalleryCollection[]
   if (!settingsResult.error) {
     for (const row of settingsResult.data ?? []) copy[`settings.${row.key}`] = row.value;
   }
-  return { collections, copy };
+  return { collections, copy, auctions: await loadAuctions() };
 }
 
 function dimensionLabel(row: {
@@ -178,7 +250,7 @@ export function useSiteContent(): LoadState {
           .order("published_on", { ascending: false }),
         supabase
           .from("exhibitions")
-          .select("id,title,description,location,start_date,status,published")
+          .select("id,title,slug,description,cover_image,location,start_date,end_date,status,published")
           .eq("published", true)
           .order("start_date", { ascending: true }),
       ]);
@@ -193,7 +265,7 @@ export function useSiteContent(): LoadState {
       if (failed) {
         setState({
           status: "error",
-          content: { ...referenceContent, artists, collections: extras.collections, copy: extras.copy },
+          content: { ...referenceContent, artists, auctions: extras.auctions, collections: extras.collections, copy: extras.copy },
           message: failed.message,
         });
         return;
@@ -203,7 +275,7 @@ export function useSiteContent(): LoadState {
       if (!hasRows) {
         setState({
           status: "ready",
-          content: { ...referenceContent, artists, collections: extras.collections, copy: extras.copy },
+          content: { ...referenceContent, artists, auctions: extras.auctions, collections: extras.collections, copy: extras.copy },
         });
         return;
       }
@@ -254,22 +326,7 @@ export function useSiteContent(): LoadState {
         published: row.published,
       }));
 
-      const exhibitions: Exhibition[] = (exhibitionsResult.data ?? []).map((row) => {
-        const date = row.start_date ? new Date(row.start_date) : null;
-        const day = date ? String(date.getUTCDate()) : "";
-        const when = date
-          ? `${date.toLocaleString("en-US", { month: "long", timeZone: "UTC" }).toUpperCase()}`
-          : "";
-        return {
-          id: row.id,
-          day,
-          when,
-          title: row.title,
-          description: row.description || "",
-          location: row.location || "",
-          link: "mailto:tommydreamchaser@gmail.com",
-        };
-      });
+      const exhibitions = mergeExhibitions((exhibitionsResult.data ?? []).map(mapExhibition));
 
       setState({
         status: "ready",
@@ -278,7 +335,8 @@ export function useSiteContent(): LoadState {
           artworks: artworks.length ? artworks : referenceArtworks,
           artists,
           articles: articles.length ? articles : referenceArticles,
-          exhibitions: exhibitions.length ? exhibitions : referenceEvents,
+          exhibitions,
+          auctions: extras.auctions,
           collections: extras.collections,
           copy: extras.copy,
         },

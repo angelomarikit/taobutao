@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Link, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ChooseFile } from "@/admin/PageEditor";
+import { referenceArtists } from "@/data/reference";
 import { supabase } from "@/lib/supabase";
 
 const fieldClass = "w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-500";
@@ -42,37 +43,63 @@ function ArtistList() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl">Artists</h1>
-          <p className="mt-2 max-w-xl text-sm text-neutral-400">A published artist appears on the gallery. Opening that artist shows their own page and works.</p>
+          <p className="mt-2 max-w-xl text-sm text-neutral-400">Published artists are the All Artists page. The picture is shown above the name, and both open that artist’s page.</p>
         </div>
-        <button className="rounded-lg bg-white px-4 py-2 text-sm font-medium" style={{ color: "#111" }} type="button" onClick={() => navigate("/admin/artists/new")}>
-          Add artist
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <Link className="rounded-full border border-white/15 px-4 py-2 text-sm" to="/gallery/artists">View page</Link>
+          <button className="rounded-lg bg-white px-4 py-2 text-sm font-medium" style={{ color: "#111" }} type="button" onClick={() => navigate("/admin/artists/new")}>
+            Add artist
+          </button>
+        </div>
       </div>
       {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
       <div className="mt-6 grid gap-3">
         {rows.map((row) => (
           <Link key={row.id} className="flex items-center justify-between gap-4 rounded-xl border border-white/10 p-4" to={`/admin/artists/${row.id}`}>
-            <span>
-              <span className="block text-sm">{row.name}</span>
-              <span className="text-xs capitalize text-neutral-500">{row.status}</span>
+            <span className="flex min-w-0 items-center gap-4">
+              {row.profile_image ? <img className="h-16 w-24 shrink-0 bg-white object-cover" src={row.profile_image} alt="" /> : <span className="h-16 w-24 shrink-0 bg-white/10" />}
+              <span className="min-w-0">
+                <span className="block truncate text-sm">{row.name}</span>
+                <span className="text-xs capitalize text-neutral-500">{row.status}</span>
+              </span>
             </span>
             <span className="text-xs text-neutral-400">Edit</span>
           </Link>
         ))}
-        {!rows.length && !error ? <p className="text-sm text-neutral-500">No artists saved yet. TAO BUTAO remains on the public gallery until you publish artists here.</p> : null}
+        {!rows.length && !error ? (
+          <div className="rounded-xl border border-white/10 p-4 text-sm text-neutral-400">
+            <p>No artists are stored in Supabase yet. The public page is still using the built-in TAO BUTAO until you save one here.</p>
+            <button
+              className="mt-4 rounded-lg bg-white px-4 py-2 text-sm font-medium"
+              style={{ color: "#111" }}
+              type="button"
+              onClick={() => navigate("/admin/artists/new", { state: referenceArtists[0] })}
+            >
+              Save TAO BUTAO to the database
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
 
+function isNewArtist(value: unknown): value is { name: string; slug: string; biography: string; image: string } {
+  if (!value || typeof value !== "object") return false;
+  const row = value as { name?: unknown; slug?: unknown; biography?: unknown; image?: unknown };
+  return typeof row.name === "string" && typeof row.slug === "string" && typeof row.biography === "string" && typeof row.image === "string";
+}
+
 function ArtistEditor() {
   const { id } = useParams();
+  const location = useLocation();
+  const starter = isNewArtist(location.state) ? location.state : null;
   const isNew = id === "new";
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [biography, setBiography] = useState("");
-  const [image, setImage] = useState("");
+  const [name, setName] = useState(starter?.name ?? "");
+  const [slug, setSlug] = useState(starter?.slug ?? "");
+  const [biography, setBiography] = useState(starter?.biography ?? "");
+  const [image, setImage] = useState(starter?.image ?? "");
   const [status, setStatus] = useState("published");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -109,7 +136,7 @@ function ArtistEditor() {
     const { data, error: saveError } = await query;
     if (saveError || !data) setError(saveError?.message || "Could not save the artist.");
     else {
-      setNotice(status === "published" ? "This artist is live on the gallery." : "Saved as a draft. Drafts stay off the public gallery.");
+      setNotice(status === "published" ? "Saved in Supabase. This artist is live on All Artists." : "Saved in Supabase as a draft. Drafts stay off All Artists.");
       if (isNew) navigate(`/admin/artists/${data.id}`, { replace: true });
     }
   }
@@ -141,8 +168,9 @@ function ArtistEditor() {
           <textarea className={`${fieldClass} mt-2 min-h-32`} value={biography} onChange={(event) => setBiography(event.target.value)} />
         </label>
         <label className="text-sm text-neutral-300">
-          Portrait
-          {image ? <img className="mt-2 max-h-40 rounded-lg object-contain" src={image} alt="" /> : null}
+          Picture
+          <span className="mt-1 block text-xs text-neutral-500">Shown above the name on All Artists.</span>
+          {image ? <img className="mt-2 max-h-64 w-full rounded-lg bg-white object-contain" src={image} alt="" /> : null}
           <span className="mt-2 block"><ChooseFile accept="image/*" onPick={(files) => { const file = files[0]; if (!file) return; void uploadPortrait(file).then(setImage).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Upload failed.")); }} /></span>
         </label>
         <label className="text-sm text-neutral-300">

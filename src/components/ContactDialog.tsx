@@ -3,7 +3,7 @@ import { submitInquiry } from "@/lib/content";
 
 import { copyText } from "@/lib/content";
 
-const ContactContext = createContext<(() => void) | null>(null);
+const ContactContext = createContext<((message?: string) => void) | null>(null);
 
 export function useOpenContact() {
   const open = useContext(ContactContext);
@@ -13,15 +13,16 @@ export function useOpenContact() {
 
 export function ContactProvider({ children, copy }: { children: ReactNode; copy?: Record<string, string> }) {
   const [open, setOpen] = useState(false);
+  const [preset, setPreset] = useState("");
   return (
-    <ContactContext.Provider value={() => setOpen(true)}>
+    <ContactContext.Provider value={(message?: string) => { setPreset(message || ""); setOpen(true); }}>
       {children}
-      <ContactDialog open={open} copy={copy} onClose={() => setOpen(false)} />
+      <ContactDialog open={open} preset={preset} copy={copy} onClose={() => { setOpen(false); setPreset(""); }} />
     </ContactContext.Provider>
   );
 }
 
-function ContactDialog({ open, copy, onClose }: { open: boolean; copy?: Record<string, string>; onClose: () => void }) {
+function ContactDialog({ open, preset, copy, onClose }: { open: boolean; preset?: string; copy?: Record<string, string>; onClose: () => void }) {
   const titleId = useId();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,11 +39,12 @@ function ContactDialog({ open, copy, onClose }: { open: boolean; copy?: Record<s
     document.addEventListener("keydown", onKey);
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    if (preset) setMessage(preset);
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
     };
-  }, [open, onClose]);
+  }, [open, onClose, preset]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

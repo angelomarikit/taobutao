@@ -44,12 +44,18 @@ export type JournalArticle = {
 
 export type Exhibition = {
   id: string;
+  slug: string;
   day: string;
   when: string;
   title: string;
   description: string;
   location: string;
   link: string;
+  image: string;
+  imageAlt: string;
+  startDate: string;
+  endDate: string;
+  status: "current" | "upcoming" | "past";
 };
 
 export type TeamMember = {
@@ -77,12 +83,36 @@ export type GalleryCollection = {
   images: { src: string; alt: string; caption: string }[];
 };
 
+export type AuctionLot = {
+  id: string;
+  lotNumber: number;
+  artistName: string;
+  title: string;
+  image: string;
+  price: number | null;
+  currency: string;
+};
+
+export type Auction = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  image: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  status: "live" | "upcoming" | "previous";
+  lots: AuctionLot[];
+};
+
 export type SiteContent = {
   source: "reference" | "supabase";
   artworks: Artwork[];
   artists: Artist[];
   articles: JournalArticle[];
   exhibitions: Exhibition[];
+  auctions: Auction[];
   collections: GalleryCollection[];
   copy: Record<string, string>;
 };

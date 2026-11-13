@@ -5,7 +5,7 @@ import { contactMailto, galleryName, socialLinks } from "@/data/reference";
 import { footerFields } from "@/data/footer";
 import { copyText } from "@/lib/content";
 import { siteOrigin } from "@/lib/supabase";
-import type { Artist, Artwork, JournalArticle } from "@/types";
+import type { Artist, Artwork, Exhibition, JournalArticle } from "@/types";
 
 function publicSocials(copy?: Record<string, string>) {
   return [
@@ -18,11 +18,13 @@ export function Navigation({
   artists = [],
   artworks = [],
   articles = [],
+  exhibitions = [],
 }: {
   copy?: Record<string, string>;
   artists?: Artist[];
   artworks?: Artwork[];
   articles?: JournalArticle[];
+  exhibitions?: Exhibition[];
 }) {
   const [open, setOpen] = useState(false);
   const [galleriesOpen, setGalleriesOpen] = useState(true);
@@ -31,7 +33,7 @@ export function Navigation({
   const location = useLocation();
   const path = location.pathname;
   const artistHere = path.startsWith("/gallery/artists") || (path === "/gallery" && location.hash === "#artists");
-  const auctionHere = !artistHere && (path === "/gallery" || path.startsWith("/gallery/"));
+  const auctionHere = path.startsWith("/auctions");
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return [];
@@ -42,11 +44,14 @@ export function Navigation({
     for (const artwork of artworks) {
       if (`${artwork.title} ${artwork.artistName}`.toLowerCase().includes(needle)) found.push({ label: artwork.title, hint: artwork.artistName || "Work", to: `/gallery/${artwork.slug}` });
     }
+    for (const exhibition of exhibitions) {
+      if (exhibition.title.toLowerCase().includes(needle)) found.push({ label: exhibition.title, hint: "Exhibition", to: `/exhibitions/${exhibition.slug}` });
+    }
     for (const article of articles) {
-      if (article.title.toLowerCase().includes(needle)) found.push({ label: article.title, hint: "Exhibition", to: `/journal/${article.slug}` });
+      if (article.title.toLowerCase().includes(needle)) found.push({ label: article.title, hint: "Story", to: `/journal/${article.slug}` });
     }
     return found.slice(0, 8);
-  }, [articles, artists, artworks, query]);
+  }, [articles, artists, artworks, exhibitions, query]);
 
   useEffect(() => {
     setOpen(false);
@@ -131,11 +136,11 @@ export function Navigation({
         </div>
         <nav className="mt-4 flex-1 overflow-y-auto pb-4">
           <MenuLink to="/" active={path === "/"}>Home</MenuLink>
-          <MenuLink to="/gallery#works" active={auctionHere}>Auctions</MenuLink>
-          <MenuLink to="/journal" active={path.startsWith("/journal")}>Exhibition</MenuLink>
-          <MenuLink to="/gallery#artists" active={artistHere}>Artist</MenuLink>
+          <MenuLink to="/auctions" active={auctionHere}>Auctions</MenuLink>
+          <MenuLink to="/exhibitions" active={path.startsWith("/exhibitions")}>Exhibition</MenuLink>
+          <MenuLink to="/gallery/artists" active={artistHere}>Artist</MenuLink>
           <button type="button" className="flex w-full items-center justify-between px-6 py-3 text-left text-[13px] font-semibold tracking-[0.12em] uppercase" style={{ color: "#1c1c1c" }} aria-expanded={galleriesOpen} onClick={() => setGalleriesOpen((current) => !current)}>
-            Galleries
+            Artworks
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ transform: galleriesOpen ? "rotate(0deg)" : "rotate(-90deg)" }}>
               <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="#1c1c1c" strokeWidth="1.4" />
             </svg>
@@ -175,9 +180,9 @@ function SubLink({ to, active, children }: { to: string; active: boolean; childr
 }
 
 const exploreRoutes = [
-  ["footer_link_auctions", "/gallery#works"],
-  ["footer_link_exhibitions", "/journal"],
-  ["footer_link_artists", "/gallery#artists"],
+  ["footer_link_auctions", "/auctions"],
+  ["footer_link_exhibitions", "/exhibitions"],
+  ["footer_link_artists", "/gallery/artists"],
   ["footer_link_stories", "/journal"],
   ["footer_link_galleries", "/gallery"],
 ] as const;
@@ -228,7 +233,7 @@ export function Footer({ copy }: { copy?: Record<string, string> }) {
       <ul className="mt-5 space-y-3 text-[15px]">
         {serviceKeys.map((key) => (
           <li key={key}>
-            <button className="cursor-pointer border-0 bg-transparent p-0 text-left" style={linkStyle} type="button" onClick={openContact}>{field(key)}</button>
+            <button className="cursor-pointer border-0 bg-transparent p-0 text-left" style={linkStyle} type="button" onClick={() => openContact()}>{field(key)}</button>
           </li>
         ))}
         <li><Link style={linkStyle} to="/about">{field("footer_link_faq")}</Link></li>

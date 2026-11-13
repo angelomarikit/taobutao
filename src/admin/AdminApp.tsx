@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "re
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { galleryName, socialLinks } from "@/data/reference";
 import { ArtistsAdmin } from "@/admin/ArtistsAdmin";
+import { AuctionsAdmin } from "@/admin/AuctionsAdmin";
 import { AssistantAdmin } from "@/admin/AssistantAdmin";
+import { ExhibitionsAdmin } from "@/admin/ExhibitionsAdmin";
 import { FooterAdmin } from "@/admin/FooterAdmin";
 import { PageEditor, ChooseFile } from "@/admin/PageEditor";
 import { aboutSections, contactSections, gallerySections, homeSections, journalSections, settingFields } from "@/admin/pageCatalog";
@@ -149,6 +151,8 @@ function Shell({
                 <SideLink to="/admin/gallery/collections">Collections</SideLink>
               </div>
             ) : null}
+            <SideLink to="/admin/auctions"><Icon d={navIcon.gallery} />Auctions</SideLink>
+            <SideLink to="/admin/exhibitions"><Icon d={navIcon.journal} />Exhibitions</SideLink>
             <SideLink to="/admin/journal"><Icon d={navIcon.journal} />Journal</SideLink>
             <SideLink to="/admin/inquiries"><Icon d={navIcon.mail} />Contact / Enquiries</SideLink>
             <SideLink to="/admin/assistant"><Icon d={navIcon.assistant} />Assistant</SideLink>
@@ -1131,7 +1135,8 @@ export function AdminApp() {
         <Route path="artworks/:id" element={<ArtworkEditor />} />
         <Route path="gallery/collections" element={<Collections />} />
         <Route path="artists/*" element={<ArtistsAdmin />} />
-        <Route path="exhibitions" element={<CollectionEditor table="exhibitions" title="Exhibitions" fields={["title", "slug", "description", "cover_image", "start_date", "end_date", "location", "status"]} />} />
+        <Route path="auctions/*" element={<AuctionsAdmin />} />
+        <Route path="exhibitions/*" element={<ExhibitionsAdmin />} />
         <Route path="journal" element={<JournalAdmin />} />
         <Route path="inquiries" element={<ContactAdmin />} />
         <Route path="assistant" element={<AssistantAdmin />} />
