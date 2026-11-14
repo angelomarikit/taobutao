@@ -75,7 +75,7 @@ export function GalleryPage({ artworks }: { artworks: Artwork[] }) {
       ) : null}
       <section id="works" className="scroll-mt-28 px-10 pb-[120px] max-[810px]:px-5 max-[810px]:pb-[100px]">
         {artworks.length ? (
-          <div className="mx-auto grid w-full max-w-[1800px] grid-cols-3 items-start gap-x-8 gap-y-16 max-[810px]:grid-cols-1 max-[810px]:gap-y-12">
+          <div className="mx-auto grid w-full max-w-[1800px] grid-cols-2 items-start gap-x-5 gap-y-12 min-[810px]:grid-cols-4 min-[810px]:gap-x-8 min-[810px]:gap-y-16 min-[1100px]:grid-cols-5">
             {artworks.map((artwork) => (
               <WorkCard key={artwork.id} artwork={artwork} />
             ))}

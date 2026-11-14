@@ -31,7 +31,9 @@ export function Navigation({
   exhibitions?: Exhibition[];
 }) {
   const [open, setOpen] = useState(false);
+  const [artworksOpen, setArtworksOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const openContact = useOpenContact();
   const { t } = useLanguage();
   const location = useLocation();
   const path = location.pathname;
@@ -60,7 +62,13 @@ export function Navigation({
   useEffect(() => {
     setOpen(false);
     setQuery("");
+    setArtworksOpen(false);
   }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    if (open) return;
+    setArtworksOpen(false);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -75,6 +83,11 @@ export function Navigation({
       document.body.style.overflow = previous;
     };
   }, [open]);
+
+  function reach(action: () => void) {
+    setOpen(false);
+    action();
+  }
 
   return (
     <>
@@ -144,7 +157,23 @@ export function Navigation({
           <MenuLink to="/auctions" active={auctionHere}>{t("auctions")}</MenuLink>
           <MenuLink to="/exhibitions" active={path.startsWith("/exhibitions")}>{t("exhibition")}</MenuLink>
           <MenuLink to="/gallery/artists" active={artistHere}>{t("artist")}</MenuLink>
-          <MenuLink to="/gallery" active={artworksHere}>{t("artworks")}</MenuLink>
+          <div className="flex items-center">
+            <MenuLink className="min-w-0 flex-1" to="/gallery" active={artworksHere}>{t("artworks")}</MenuLink>
+            <button type="button" className="grid h-11 w-11 shrink-0 place-items-center" style={{ color: "#1c1c1c" }} aria-expanded={artworksOpen} aria-label={t("artworks")} onClick={() => setArtworksOpen((current) => !current)}>
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ transform: artworksOpen ? "rotate(0deg)" : "rotate(-90deg)" }}>
+                <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </button>
+          </div>
+          {artworksOpen ? (
+            <div className="pb-2">
+              <SubLink to="/about" active={path.startsWith("/about")}>{t("about")}</SubLink>
+              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>{t("contact")}</button>
+              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>{t("buy")}</button>
+              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>{t("sell")}</button>
+              <SubLink to="/about" active={false}>{t("faq")}</SubLink>
+            </div>
+          ) : null}
         </nav>
         <div className="px-6 pt-4 pb-6">
           <Link className="block py-3 text-center text-sm font-medium" style={{ background: "#111", color: "#fff" }} to="/admin">{t("signInButton")}</Link>
@@ -216,9 +245,17 @@ function LanguageMenu() {
   );
 }
 
-function MenuLink({ to, active, children }: { to: string; active: boolean; children: string }) {
+function MenuLink({ to, active, children, className = "" }: { to: string; active: boolean; children: string; className?: string }) {
   return (
-    <Link className="block px-6 py-3 text-[13px] font-semibold tracking-[0.12em] uppercase" style={{ color: "#1c1c1c", background: active ? "#ededed" : "transparent" }} to={to}>
+    <Link className={`block px-6 py-3 text-[13px] font-semibold tracking-[0.12em] uppercase ${className}`} style={{ color: "#1c1c1c", background: active ? "#ededed" : "transparent" }} to={to}>
+      {children}
+    </Link>
+  );
+}
+
+function SubLink({ to, active, children }: { to: string; active: boolean; children: string }) {
+  return (
+    <Link className="block px-6 py-2.5 text-[15px]" style={{ color: "#8a8a8a", background: active ? "#f6f6f6" : "transparent" }} to={to}>
       {children}
     </Link>
   );
