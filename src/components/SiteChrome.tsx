@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BrandMark } from "@/components/BrandMark";
 import { useOpenContact } from "@/components/ContactDialog";
@@ -13,6 +13,8 @@ function publicSocials(copy?: Record<string, string>) {
   return [
     { label: "Instagram", href: copyText(copy, "settings.instagram_url", socialLinks[0].href) },
     { label: "Facebook", href: copyText(copy, "settings.facebook_url", socialLinks[1].href) },
+    { label: "WhatsApp", href: copyText(copy, "settings.whatsapp_url", "https://wa.me/639568226826") },
+    { label: "Viber", href: copyText(copy, "settings.viber_url", "viber://chat?number=%2B639568226826") },
   ];
 }
 
@@ -253,8 +255,8 @@ export function Footer({ copy }: { copy?: Record<string, string> }) {
     return (
       <div className="flex gap-4">
         {socials.map((link) => (
-          <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} className="grid h-8 w-8 place-items-center" style={linkStyle}>
-            {link.label === "Facebook" ? <FacebookIcon /> : <InstagramIcon />}
+          <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} className="grid h-9 w-9 place-items-center">
+            <SocialIcon label={link.label} />
           </a>
         ))}
       </div>
@@ -364,20 +366,54 @@ export function Footer({ copy }: { copy?: Record<string, string> }) {
   );
 }
 
+function SocialIcon({ label }: { label: string }) {
+  if (label === "Facebook") return <FacebookIcon />;
+  if (label === "WhatsApp") return <WhatsAppIcon />;
+  if (label === "Viber") return <ViberIcon />;
+  return <InstagramIcon />;
+}
+
 function FacebookIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
-      <path d="M9.2 14V8.7h1.8l.3-2H9.2V5.4c0-.6.2-1 1-1H11.4V2.6c-.3 0-.9-.1-1.7-.1-1.7 0-2.8 1-2.8 2.9v1.3H5.2v2h1.7V14h2.3Z" />
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="#1877F2" />
+      <path fill="#fff" d="M13.2 18.5v-5.1h1.7l.3-1.9h-2v-1.2c0-.6.2-.9 1-.9h1V7.6c-.2 0-.8-.1-1.5-.1-1.5 0-2.6.9-2.6 2.6v1.4H9.4v1.9h1.7v5.1h2.1Z" />
     </svg>
   );
 }
 
 function InstagramIcon() {
+  const id = useId().replace(/:/g, "");
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.3">
-      <rect x="2.5" y="2.5" width="11" height="11" rx="3" />
-      <circle cx="8" cy="8" r="2.4" />
-      <circle cx="11.3" cy="4.7" r="0.6" fill="currentColor" stroke="none" />
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <defs>
+        <linearGradient id={id} x1="4" y1="20" x2="20" y2="4" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#f9ce34" />
+          <stop offset="0.45" stopColor="#ee2a7b" />
+          <stop offset="1" stopColor="#6228d7" />
+        </linearGradient>
+      </defs>
+      <rect x="3" y="3" width="18" height="18" rx="5" fill={`url(#${id})`} />
+      <circle cx="12" cy="12" r="4" fill="none" stroke="#fff" strokeWidth="1.7" />
+      <circle cx="16.7" cy="7.3" r="1" fill="#fff" />
+    </svg>
+  );
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="#25D366" />
+      <path fill="#fff" d="M16.7 14.6c-.2-.1-1.3-.6-1.5-.7-.2-.1-.3-.1-.5.1l-.5.6c-.1.2-.3.2-.5.1-.2-.1-.9-.3-1.7-1-.6-.6-1.1-1.3-1.2-1.5-.1-.2 0-.3.1-.4l.4-.4c.1-.1.1-.2.2-.4.1-.1 0-.3 0-.4l-.7-1.6c-.2-.4-.4-.4-.5-.4h-.4c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.3c.1.2 1.6 2.4 3.8 3.3 1.4.6 1.7.6 2.3.5.4-.1 1.3-.5 1.4-1 .2-.5.2-.9.1-1 0-.1-.2-.1-.4-.2Z" />
+    </svg>
+  );
+}
+
+function ViberIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="#7360F2" />
+      <path fill="#fff" d="M8.2 7.6c.3-1.2 1.6-1.1 2.3-.4.3.3.6.8.8 1.2.2.5 0 .9-.3 1.2l-.5.4c.5.9 1.2 1.6 2.1 2.1l.4-.5c.3-.3.7-.5 1.2-.3.4.2.9.5 1.2.8.7.7.8 2 .4 2.3-1.1.9-2.6.8-3.8.2-1.4-.7-2.6-1.8-3.4-3.2-.7-1.2-.7-2.7-.4-3.8Z" />
     </svg>
   );
 }

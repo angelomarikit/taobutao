@@ -17,6 +17,8 @@ export const footerFields: FooterField[] = [
   },
   { group: "Social", key: "instagram_url", label: "Instagram URL", fallback: "https://www.instagram.com/tao_butao" },
   { group: "Social", key: "facebook_url", label: "Facebook URL", fallback: "https://www.facebook.com/taobutao82" },
+  { group: "Social", key: "whatsapp_url", label: "WhatsApp link", fallback: "https://wa.me/639568226826" },
+  { group: "Social", key: "viber_url", label: "Viber link", fallback: "viber://chat?number=%2B639568226826" },
   { group: "Explore", key: "footer_explore_label", label: "Column heading", fallback: "Explore" },
   { group: "Explore", key: "footer_link_auctions", label: "Auctions", fallback: "Auctions" },
   { group: "Explore", key: "footer_link_exhibitions", label: "Exhibitions", fallback: "Exhibitions" },
