@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import { PageMeta } from "@/components/SiteChrome";
 import { siteTitle } from "@/data/reference";
+import { useLanguage } from "@/lib/language";
 import type { Exhibition, SiteContent } from "@/types";
 
 type Phase = "upcoming" | "ongoing" | "previous";
@@ -30,6 +31,7 @@ function dateLabel(exhibition: Exhibition) {
 
 export function ExhibitionsPage() {
   const { exhibitions } = useOutletContext<SiteContent>();
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<"all" | "ongoing" | "previous">("all");
   const upcoming = useMemo(() => exhibitions.filter((exhibition) => phase(exhibition) === "upcoming"), [exhibitions]);
   const visible = useMemo(() => {
@@ -41,24 +43,24 @@ export function ExhibitionsPage() {
     <main className="bg-black px-10 pt-[140px] pb-[120px] text-white max-[810px]:px-5 max-[810px]:pt-[120px] max-[810px]:pb-[100px]">
       <PageMeta title={`Exhibitions — ${siteTitle}`} description="Exhibitions at Voxartgallery." path="/exhibitions" />
       <div className="mx-auto w-full max-w-[1200px]">
-        <h1 className="h2 text-center text-white">Exhibitions</h1>
+        <h1 className="h2 text-center text-white">{t("exhibitions")}</h1>
         {upcoming.length ? (
           <div className="mt-16 grid grid-cols-2 gap-8 max-[810px]:grid-cols-1">
             {upcoming.map((exhibition) => <ExhibitionCard key={exhibition.id} exhibition={exhibition} />)}
           </div>
         ) : (
           <div className="mx-auto mt-16 max-w-[640px] text-center">
-            <p className="h3 text-white">No Upcoming Exhibition</p>
+            <p className="h3 text-white">{t("noUpcoming")}</p>
             <span className="mx-auto mt-4 block h-px w-16 bg-white" />
-            <p className="mt-6 text-[15px] leading-7" style={{ color: "#f2f2f2" }}>There is no upcoming exhibition scheduled.</p>
-            <p className="mt-3 text-[15px] leading-7" style={{ color: "#d0d0d0" }}>Visits follow the exhibition schedule.</p>
+            <p className="mt-6 text-[15px] leading-7" style={{ color: "#f2f2f2" }}>{t("noUpcomingDetail")}</p>
+            <p className="mt-3 text-[15px] leading-7" style={{ color: "#d0d0d0" }}>{t("visitSchedule")}</p>
           </div>
         )}
         <div className="mt-20 border-t border-white/15 pt-10">
           <div className="flex flex-wrap gap-8 text-[13px] tracking-[0.16em] uppercase">
             {(["all", "ongoing", "previous"] as const).map((item) => (
               <button key={item} className="border-b pb-1" style={{ color: filter === item ? "#fff" : "#8a8a8a", borderColor: filter === item ? "#fff" : "transparent" }} type="button" onClick={() => setFilter(item)}>
-                {item}
+                {t(item)}
               </button>
             ))}
           </div>
@@ -67,7 +69,7 @@ export function ExhibitionsPage() {
               {visible.map((exhibition) => <ExhibitionCard key={exhibition.id} exhibition={exhibition} />)}
             </div>
           ) : (
-            <p className="mt-10 text-[15px]">No exhibitions</p>
+            <p className="mt-10 text-[15px]">{t("noExhibitions")}</p>
           )}
         </div>
       </div>

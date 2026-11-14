@@ -3,12 +3,15 @@ import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } fro
 import { galleryName, socialLinks } from "@/data/reference";
 import { ArtistsAdmin } from "@/admin/ArtistsAdmin";
 import { AuctionsAdmin } from "@/admin/AuctionsAdmin";
+import { AccountsAdmin } from "@/admin/AccountsAdmin";
 import { AssistantAdmin } from "@/admin/AssistantAdmin";
 import { ExhibitionsAdmin } from "@/admin/ExhibitionsAdmin";
 import { FooterAdmin } from "@/admin/FooterAdmin";
 import { PageEditor, ChooseFile } from "@/admin/PageEditor";
 import { aboutSections, contactSections, gallerySections, homeSections, journalSections, settingFields } from "@/admin/pageCatalog";
-import { siteOrigin, supabase, supabaseConfigured, supabaseProjectHost } from "@/lib/supabase";
+import { siteOrigin, supabase, supabaseConfigured } from "@/lib/supabase";
+
+type ApplicationStatus = "pending" | "approved" | "rejected";
 
 type SessionState = {
   ready: boolean;
@@ -18,6 +21,7 @@ type SessionState = {
   fullName: string | null;
   role: string | null;
   profileError: string | null;
+  applicationStatus: ApplicationStatus | null;
 };
 
 const emptySession: SessionState = {
@@ -28,6 +32,7 @@ const emptySession: SessionState = {
   fullName: null,
   role: null,
   profileError: null,
+  applicationStatus: null,
 };
 
 function useAdminSession() {
@@ -51,6 +56,34 @@ function useAdminSession() {
         .select("role, full_name")
         .eq("user_id", user.id)
         .maybeSingle();
+      let applicationStatus: ApplicationStatus | null = null;
+      let applicationError: string | null = null;
+      if (!profile && !error) {
+        const existing = await supabase!
+          .from("admin_applications")
+          .select("status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (existing.error) {
+          applicationError = existing.error.message;
+        } else if (existing.data?.status === "pending" || existing.data?.status === "approved" || existing.data?.status === "rejected") {
+          applicationStatus = existing.data.status;
+        } else {
+          const created = await supabase!
+            .from("admin_applications")
+            .insert({
+              user_id: user.id,
+              email: user.email ?? "",
+              full_name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
+              status: "pending",
+            })
+            .select("status")
+            .maybeSingle();
+          if (created.error?.code === "23505") applicationStatus = "pending";
+          else if (created.error) applicationError = created.error.message;
+          else applicationStatus = "pending";
+        }
+      }
       if (!ignore) {
         setSession({
           ready: true,
@@ -59,7 +92,8 @@ function useAdminSession() {
           isAdmin: Boolean(profile),
           fullName: profile?.full_name ?? null,
           role: profile?.role ?? null,
-          profileError: error?.message ?? null,
+          profileError: error?.message ?? applicationError,
+          applicationStatus,
         });
       }
     }
@@ -158,6 +192,7 @@ function Shell({
             <SideLink to="/admin/exhibitions"><Icon d={navIcon.journal} />Exhibitions</SideLink>
             <SideLink to="/admin/journal"><Icon d={navIcon.journal} />Journal</SideLink>
             <SideLink to="/admin/inquiries"><Icon d={navIcon.mail} />Contact / Enquiries</SideLink>
+            <SideLink to="/admin/accounts"><Icon d={navIcon.about} />Accounts</SideLink>
             <SideLink to="/admin/assistant"><Icon d={navIcon.assistant} />Assistant</SideLink>
             <SideLink to="/admin/media"><Icon d={navIcon.media} />Media Library</SideLink>
             <SideLink to="/admin/footer"><Icon d={navIcon.footer} />Footer</SideLink>
@@ -280,6 +315,9 @@ function Login() {
           <button className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-black" type="submit">
             Sign In <span aria-hidden="true">→</span>
           </button>
+          <p className="mt-6 text-center text-sm text-neutral-400">
+            Need an account? <Link className="font-semibold tracking-[0.12em] text-white" to="/admin/signup">SIGN UP</Link>
+          </p>
           <div className="mt-10 flex items-center gap-4 text-[11px] tracking-[0.18em] text-neutral-500">
             <span className="h-px flex-1 bg-white/15" />
             {galleryName}
@@ -294,6 +332,126 @@ function Login() {
           </div>
         </form>
       </section>
+    </main>
+  );
+}
+
+function Register() {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    if (password.length < 8) {
+      setError("Use at least 8 characters for the password.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("The passwords do not match.");
+      return;
+    }
+    const { data, error: signUpError } = await supabase!.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName.trim() } },
+    });
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      setError("An account with this email already exists. Sign in if it has been approved.");
+      return;
+    }
+    if (!data.session || !data.user) {
+      setNotice("Check your email to confirm the address. The account stays off until an administrator approves it.");
+      return;
+    }
+    const { error: requestError } = await supabase!.from("admin_applications").insert({
+      user_id: data.user.id,
+      email,
+      full_name: fullName.trim(),
+      status: "pending",
+    });
+    if (requestError && requestError.code !== "23505") {
+      setError(requestError.message.includes("admin_applications")
+        ? "Run supabase/migrations/005_admin_applications.sql in the Supabase SQL editor, then submit again."
+        : requestError.message);
+    }
+  }
+
+  return (
+    <main className="grid min-h-screen bg-[#0c0c0e] text-white lg:grid-cols-2" style={{ fontFamily: "Inter, sans-serif" }}>
+      <section className="relative min-h-[280px] overflow-hidden lg:min-h-screen">
+        <img
+          className="pointer-events-none absolute top-0 left-1/2"
+          style={{ height: "700%", width: "auto", maxWidth: "none", transform: "translate(-50%, -35.5%)" }}
+          src="/media/about-black-pair.jpg"
+          alt=""
+        />
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="relative flex h-full flex-col justify-center px-10 py-16 text-white lg:px-16">
+          <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">{galleryName}</h1>
+          <p className="mt-4 text-sm tracking-[0.42em] text-white/90">ART GALLERY CMS</p>
+          <span className="mt-6 block h-px w-16 bg-white/70" />
+          <p className="mt-8 max-w-[280px] text-sm leading-6 text-white/85">
+            Request access. An administrator approves the account before it can sign in.
+          </p>
+        </div>
+      </section>
+      <section className="flex items-center justify-center px-6 py-16">
+        <form className="w-full max-w-[420px]" onSubmit={(event) => void onSubmit(event)}>
+          <h2 className="text-4xl font-semibold tracking-tight">Create an account</h2>
+          <p className="mt-2 text-sm text-neutral-400">The account stays off until an administrator approves it.</p>
+          <label className="relative mt-8 block">
+            <span className="sr-only">Full name</span>
+            <input className={loginInput} style={{ paddingLeft: "1rem" }} placeholder="Full name" autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
+          </label>
+          <label className="relative mt-4 block">
+            <span className="sr-only">Email Address</span>
+            <MailIcon />
+            <input className={loginInput} type="email" placeholder="Email Address" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          </label>
+          <label className="relative mt-4 block">
+            <span className="sr-only">Password</span>
+            <LockIcon />
+            <input className={`${loginInput} pr-12`} type={showPassword ? "text" : "password"} placeholder="Password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+            <button className="absolute top-1/2 right-3 -translate-y-1/2 text-neutral-400" type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)}>
+              <EyeIcon off={showPassword} />
+            </button>
+          </label>
+          <label className="relative mt-4 block">
+            <span className="sr-only">Confirm password</span>
+            <LockIcon />
+            <input className={loginInput} type={showPassword ? "text" : "password"} placeholder="Confirm password" autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} required />
+          </label>
+          {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
+          {notice ? <p className="mt-4 text-sm leading-6 text-neutral-300">{notice}</p> : null}
+          <button className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-black" type="submit">
+            Request access <span aria-hidden="true">→</span>
+          </button>
+          <p className="mt-6 text-center text-sm text-neutral-400">
+            Already approved? <Link className="font-semibold tracking-[0.12em] text-white" to="/admin">SIGN IN</Link>
+          </p>
+        </form>
+      </section>
+    </main>
+  );
+}
+
+function AccountHold({ title, body }: { title: string; body: string }) {
+  return (
+    <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 py-20 text-sm text-white" style={{ fontFamily: "Inter, sans-serif" }}>
+      <h1 className="text-2xl">{title}</h1>
+      <p className="mt-3 leading-6 text-neutral-300">{body}</p>
+      <button className="mt-8 w-fit rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black" type="button" onClick={() => void supabase?.auth.signOut()}>Sign out</button>
     </main>
   );
 }
@@ -1114,28 +1272,20 @@ function Settings() {
 
 export function AdminApp() {
   const session = useAdminSession();
+  const location = useLocation();
+  const signingUp = location.pathname.endsWith("/signup");
 
   if (!supabaseConfigured) return <Setup />;
   if (!session.ready) return <main className="grid min-h-screen place-items-center text-sm">Checking session…</main>;
-  if (!session.userId) return <Login />;
+  if (!session.userId) return signingUp ? <Register /> : <Login />;
   if (!session.isAdmin) {
-    const host = supabaseProjectHost();
-    const sql = [
-      "grant select on table public.admin_profiles to authenticated;",
-      "",
-      "insert into public.admin_profiles (user_id, full_name, role)",
-      `values ('${session.userId}', 'Gallery Owner', 'owner')`,
-      "on conflict (user_id) do update set role = 'owner', full_name = excluded.full_name",
-      "returning user_id, role;",
-    ].join("\n");
-    return (
-      <main className="mx-auto max-w-xl px-6 py-20 text-sm text-white">
-        <h1 className="text-2xl">This account is not an administrator.</h1>
-        <p className="mt-3 leading-6 text-neutral-300">Signed in as {session.email}. Open the SQL editor for {host || "the Supabase project this site is using"}, run the statement below, and confirm the result shows this user id with role owner. Then reload this page.</p>
-        {session.profileError ? <p className="mt-3 text-red-300">{session.profileError}</p> : null}
-        <pre className="mt-5 overflow-x-auto rounded-xl border border-white/15 bg-black/40 p-4 text-[13px] leading-6 text-white">{sql}</pre>
-      </main>
-    );
+    if (session.applicationStatus === "rejected") {
+      return <AccountHold title="This registration was not approved." body={`Signed in as ${session.email}. An administrator declined this account, so it cannot open the CMS.`} />;
+    }
+    if (session.profileError) {
+      return <AccountHold title="Registration is not ready yet." body={session.profileError.includes("admin_applications") ? "Run supabase/migrations/005_admin_applications.sql in the Supabase SQL editor, then sign in again." : session.profileError} />;
+    }
+    return <AccountHold title="This account is waiting for approval." body={`Signed in as ${session.email}. An administrator has to approve it before the account can use the CMS.`} />;
   }
 
   return (
@@ -1153,6 +1303,7 @@ export function AdminApp() {
         <Route path="exhibitions/*" element={<ExhibitionsAdmin />} />
         <Route path="journal" element={<JournalAdmin />} />
         <Route path="inquiries" element={<ContactAdmin />} />
+        <Route path="accounts" element={<AccountsAdmin />} />
         <Route path="assistant" element={<AssistantAdmin />} />
         <Route path="footer" element={<FooterAdmin />} />
         <Route path="media" element={<MediaLibrary />} />

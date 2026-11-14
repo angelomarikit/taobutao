@@ -5,6 +5,7 @@ import { useOpenContact } from "@/components/ContactDialog";
 import { contactMailto, galleryName, socialLinks } from "@/data/reference";
 import { footerFields } from "@/data/footer";
 import { copyText } from "@/lib/content";
+import { languages, useLanguage } from "@/lib/language";
 import { siteOrigin } from "@/lib/supabase";
 import type { Artist, Artwork, Exhibition, JournalArticle } from "@/types";
 
@@ -28,31 +29,31 @@ export function Navigation({
   exhibitions?: Exhibition[];
 }) {
   const [open, setOpen] = useState(false);
-  const [galleriesOpen, setGalleriesOpen] = useState(true);
   const [query, setQuery] = useState("");
-  const openContact = useOpenContact();
+  const { t } = useLanguage();
   const location = useLocation();
   const path = location.pathname;
-  const artistHere = path.startsWith("/gallery/artists") || (path === "/gallery" && location.hash === "#artists");
+  const artistHere = path.startsWith("/gallery/artists");
+  const artworksHere = path === "/gallery" || (path.startsWith("/gallery/") && !path.startsWith("/gallery/artists") && !path.startsWith("/gallery/collections"));
   const auctionHere = path.startsWith("/auctions");
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return [];
     const found: { label: string; hint: string; to: string }[] = [];
     for (const artist of artists) {
-      if (artist.name.toLowerCase().includes(needle)) found.push({ label: artist.name, hint: "Artist", to: `/gallery/artists/${artist.slug}` });
+      if (artist.name.toLowerCase().includes(needle)) found.push({ label: artist.name, hint: t("hintArtist"), to: `/gallery/artists/${artist.slug}` });
     }
     for (const artwork of artworks) {
-      if (`${artwork.title} ${artwork.artistName}`.toLowerCase().includes(needle)) found.push({ label: artwork.title, hint: artwork.artistName || "Work", to: `/gallery/${artwork.slug}` });
+      if (`${artwork.title} ${artwork.artistName}`.toLowerCase().includes(needle)) found.push({ label: artwork.title, hint: artwork.artistName || t("hintWork"), to: `/gallery/${artwork.slug}` });
     }
     for (const exhibition of exhibitions) {
-      if (exhibition.title.toLowerCase().includes(needle)) found.push({ label: exhibition.title, hint: "Exhibition", to: `/exhibitions/${exhibition.slug}` });
+      if (exhibition.title.toLowerCase().includes(needle)) found.push({ label: exhibition.title, hint: t("hintExhibition"), to: `/exhibitions/${exhibition.slug}` });
     }
     for (const article of articles) {
-      if (article.title.toLowerCase().includes(needle)) found.push({ label: article.title, hint: "Story", to: `/journal/${article.slug}` });
+      if (article.title.toLowerCase().includes(needle)) found.push({ label: article.title, hint: t("hintStory"), to: `/journal/${article.slug}` });
     }
     return found.slice(0, 8);
-  }, [articles, artists, artworks, exhibitions, query]);
+  }, [articles, artists, artworks, exhibitions, query, t]);
 
   useEffect(() => {
     setOpen(false);
@@ -73,16 +74,11 @@ export function Navigation({
     };
   }, [open]);
 
-  function reach(action: () => void) {
-    setOpen(false);
-    action();
-  }
-
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-[8] bg-black text-white">
-        <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center px-5 py-5 min-[1100px]:px-10">
-          <button type="button" className="grid h-11 w-11 place-items-center" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center px-5 py-5 min-[1100px]:px-10">
+          <button type="button" className="grid h-11 w-11 place-items-center justify-self-start" aria-label={t("openMenu")} aria-expanded={open} onClick={() => setOpen(true)}>
             <span className="flex w-[22px] flex-col gap-[5px]">
               <span className="h-px bg-white" />
               <span className="h-px bg-white" />
@@ -92,12 +88,15 @@ export function Navigation({
           <Link to="/" className="grid place-items-center text-white" aria-label={galleryName}>
             <BrandMark className="h-9 min-[1100px]:h-11" />
           </Link>
-          <Link to="/admin" className="grid h-11 w-11 place-items-center justify-self-end" aria-label="Sign in" style={{ color: "#fff" }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.7" />
-              <path d="M5.2 19.4c1.5-3.2 3.8-4.6 6.8-4.6s5.3 1.4 6.8 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-            </svg>
-          </Link>
+          <div className="flex items-center justify-self-end">
+            <LanguageMenu />
+            <Link to="/admin" className="grid h-11 w-11 place-items-center" aria-label={t("signIn")} style={{ color: "#fff" }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M5.2 19.4c1.5-3.2 3.8-4.6 6.8-4.6s5.3 1.4 6.8 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -107,17 +106,17 @@ export function Navigation({
           <Link to="/" aria-label={galleryName} onClick={() => setOpen(false)}>
             <BrandMark className="h-9" />
           </Link>
-          <button type="button" className="grid h-10 w-10 place-items-center text-[28px] leading-none" style={{ color: "#1c1c1c" }} aria-label="Close menu" onClick={() => setOpen(false)}>
+          <button type="button" className="grid h-10 w-10 place-items-center text-[28px] leading-none" style={{ color: "#1c1c1c" }} aria-label={t("closeMenu")} onClick={() => setOpen(false)}>
             ×
           </button>
         </div>
         <div className="px-6 pt-4">
           <label className="flex items-center gap-2 rounded-md border px-3 py-2" style={{ borderColor: "#d9d9d9" }}>
-            <span className="sr-only">Search</span>
+            <span className="sr-only">{t("search")}</span>
             <input
               className="w-full bg-transparent text-sm outline-none"
               style={{ color: "#1c1c1c" }}
-              placeholder="Search artists, works, exhibitions"
+              placeholder={t("search")}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -133,50 +132,90 @@ export function Navigation({
                   <span className="block">{result.label}</span>
                   <span className="text-xs" style={{ color: "#8a8a8a" }}>{result.hint}</span>
                 </Link>
-              )) : <p className="px-3 py-2 text-sm" style={{ color: "#8a8a8a" }}>No results</p>}
+              )) : <p className="px-3 py-2 text-sm" style={{ color: "#8a8a8a" }}>{t("noResults")}</p>}
             </div>
           ) : null}
         </div>
         <nav className="mt-4 flex-1 overflow-y-auto pb-4">
-          <MenuLink to="/" active={path === "/"}>Home</MenuLink>
-          <MenuLink to="/auctions" active={auctionHere}>Auctions</MenuLink>
-          <MenuLink to="/exhibitions" active={path.startsWith("/exhibitions")}>Exhibition</MenuLink>
-          <MenuLink to="/gallery/artists" active={artistHere}>Artist</MenuLink>
-          <button type="button" className="flex w-full items-center justify-between px-6 py-3 text-left text-[13px] font-semibold tracking-[0.12em] uppercase" style={{ color: "#1c1c1c" }} aria-expanded={galleriesOpen} onClick={() => setGalleriesOpen((current) => !current)}>
-            Artworks
-            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ transform: galleriesOpen ? "rotate(0deg)" : "rotate(-90deg)" }}>
-              <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="#1c1c1c" strokeWidth="1.4" />
-            </svg>
-          </button>
-          {galleriesOpen ? (
-            <div className="pb-2">
-              <SubLink to="/about" active={path.startsWith("/about")}>About us</SubLink>
-              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>Contact us</button>
-              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>How to buy</button>
-              <button type="button" className="block w-full px-6 py-2.5 text-left text-[15px]" style={{ color: "#8a8a8a" }} onClick={() => reach(openContact)}>How to sell</button>
-              <SubLink to="/about" active={false}>FAQ</SubLink>
-            </div>
-          ) : null}
+          <MenuLink to="/" active={path === "/"}>{t("home")}</MenuLink>
+          <MenuLink to="/auctions" active={auctionHere}>{t("auctions")}</MenuLink>
+          <MenuLink to="/exhibitions" active={path.startsWith("/exhibitions")}>{t("exhibition")}</MenuLink>
+          <MenuLink to="/gallery/artists" active={artistHere}>{t("artist")}</MenuLink>
+          <MenuLink to="/gallery" active={artworksHere}>{t("artworks")}</MenuLink>
         </nav>
         <div className="px-6 pt-4 pb-6">
-          <Link className="block py-3 text-center text-sm font-medium" style={{ background: "#111", color: "#fff" }} to="/admin">Sign In</Link>
+          <Link className="block py-3 text-center text-sm font-medium" style={{ background: "#111", color: "#fff" }} to="/admin">{t("signInButton")}</Link>
         </div>
       </aside>
     </>
   );
 }
 
-function MenuLink({ to, active, children }: { to: string; active: boolean; children: string }) {
+function LanguageMenu() {
+  const { language, setLanguage, t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const current = languages.find((item) => item.id === language) ?? languages[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const onPointer = (event: PointerEvent) => {
+      const root = document.getElementById("language-menu");
+      if (root && event.target instanceof Node && !root.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [open]);
+
   return (
-    <Link className="block px-6 py-3 text-[13px] font-semibold tracking-[0.12em] uppercase" style={{ color: "#1c1c1c", background: active ? "#ededed" : "transparent" }} to={to}>
-      {children}
-    </Link>
+    <div id="language-menu" className="relative">
+      <button
+        type="button"
+        className="flex h-11 items-center gap-1 px-2 text-[13px] tracking-[0.12em]"
+        style={{ color: "#fff", fontFamily: "Inter, sans-serif" }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={t("language")}
+        onClick={() => setOpen((currentOpen) => !currentOpen)}
+      >
+        {current.code}
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ transform: open ? "rotate(180deg)" : undefined }}>
+          <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        </svg>
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-full z-20 min-w-36 border border-white/15 bg-black py-1" role="listbox" aria-label={t("language")}>
+          {languages.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="option"
+              aria-selected={item.id === language}
+              className="block w-full px-4 py-2 text-left text-[13px] tracking-[0.08em]"
+              style={{ color: item.id === language ? "#fff" : "#bdbdbd", fontFamily: "Inter, sans-serif" }}
+              onClick={() => {
+                setLanguage(item.id);
+                setOpen(false);
+              }}
+            >
+              {item.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
-function SubLink({ to, active, children }: { to: string; active: boolean; children: string }) {
+function MenuLink({ to, active, children }: { to: string; active: boolean; children: string }) {
   return (
-    <Link className="block px-6 py-2.5 text-[15px]" style={{ color: "#8a8a8a", background: active ? "#f6f6f6" : "transparent" }} to={to}>
+    <Link className="block px-6 py-3 text-[13px] font-semibold tracking-[0.12em] uppercase" style={{ color: "#1c1c1c", background: active ? "#ededed" : "transparent" }} to={to}>
       {children}
     </Link>
   );

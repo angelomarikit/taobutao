@@ -2,10 +2,12 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import { PageMeta } from "@/components/SiteChrome";
 import { siteTitle } from "@/data/reference";
+import { useLanguage } from "@/lib/language";
 import type { SiteContent } from "@/types";
 
 export function ArtistsPage() {
   const { artists } = useOutletContext<SiteContent>();
+  const { t } = useLanguage();
   const [draft, setDraft] = useState("");
   const [name, setName] = useState("");
 
@@ -25,17 +27,17 @@ export function ArtistsPage() {
     <main className="bg-black px-10 pt-[140px] pb-[120px] text-white max-[810px]:px-5 max-[810px]:pt-[120px] max-[810px]:pb-[100px]">
       <PageMeta title={`All Artists — ${siteTitle}`} description="Artists represented by Voxartgallery." path="/gallery/artists" />
       <div className="mx-auto w-full max-w-[1100px]">
-        <h1 className="h2 text-center text-white">All Artists</h1>
+        <h1 className="h2 text-center text-white">{t("allArtists")}</h1>
         <form className="mx-auto mt-12 flex max-w-[720px] items-center gap-3 max-[810px]:flex-col" onSubmit={apply}>
           <input
             className="h-12 w-full border border-white/25 bg-transparent px-4 text-[15px] text-white outline-none placeholder:text-neutral-500"
-            placeholder="By Name"
+            placeholder={t("byName")}
             value={draft}
-            aria-label="By Name"
+            aria-label={t("byName")}
             onChange={(event) => setDraft(event.target.value)}
           />
           <button className="h-12 shrink-0 bg-white px-10 text-[15px] font-medium max-[810px]:w-full" style={{ color: "#111" }} type="submit">
-            Filter
+            {t("filter")}
           </button>
         </form>
         {visible.length ? (
@@ -54,7 +56,7 @@ export function ArtistsPage() {
             ))}
           </ul>
         ) : (
-          <p className="mt-14 text-[15px] text-white">No artists</p>
+          <p className="mt-14 text-[15px] text-white">{t("noArtists")}</p>
         )}
       </div>
     </main>

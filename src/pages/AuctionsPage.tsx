@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import { PageMeta } from "@/components/SiteChrome";
 import { siteTitle } from "@/data/reference";
+import { useLanguage } from "@/lib/language";
 import type { Auction, SiteContent } from "@/types";
 
 type Phase = "live" | "upcoming" | "previous";
@@ -27,10 +28,9 @@ function dateLabel(auction: Auction) {
   return "";
 }
 
-const phaseLabel: Record<Phase, string> = { live: "Live auction", upcoming: "Upcoming", previous: "Previous" };
-
 export function AuctionsPage() {
   const { auctions } = useOutletContext<SiteContent>();
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<"all" | Phase>("all");
   const visible = useMemo(() => {
     const rows = filter === "all" ? auctions : auctions.filter((auction) => phase(auction) === filter);
@@ -41,11 +41,11 @@ export function AuctionsPage() {
     <main className="bg-black px-10 pt-[140px] pb-[120px] text-white max-[810px]:px-5 max-[810px]:pt-[120px] max-[810px]:pb-[100px]">
       <PageMeta title={`Auctions — ${siteTitle}`} description="Auctions at Voxartgallery." path="/auctions" />
       <div className="mx-auto w-full max-w-[1200px]">
-        <h1 className="h2 text-center text-white">Auctions</h1>
+        <h1 className="h2 text-center text-white">{t("auctions")}</h1>
         <div className="mt-12 flex flex-wrap gap-8 text-[13px] tracking-[0.16em] uppercase">
           {(["all", "live", "upcoming", "previous"] as const).map((item) => (
             <button key={item} className="border-b pb-1" style={{ color: filter === item ? "#fff" : "#8a8a8a", borderColor: filter === item ? "#fff" : "transparent" }} type="button" onClick={() => setFilter(item)}>
-              {item}
+              {t(item)}
             </button>
           ))}
         </div>
@@ -57,7 +57,7 @@ export function AuctionsPage() {
                 <Link key={auction.id} className="flex flex-col gap-4 text-white" to={`/auctions/${auction.slug}`}>
                   {auction.image ? <img className="block h-auto w-full bg-white" src={auction.image} alt="" /> : <span className="block min-h-56 bg-white/10" />}
                   <span>
-                    <span className="block text-[11px] tracking-[0.16em] uppercase" style={{ color: "#d0d0d0" }}>{phaseLabel[kind]}</span>
+                    <span className="block text-[11px] tracking-[0.16em] uppercase" style={{ color: "#d0d0d0" }}>{kind === "live" ? t("liveAuction") : t(kind)}</span>
                     <span className="mt-2 block text-[22px]">{auction.title}</span>
                     {dateLabel(auction) ? <span className="mt-2 block text-[14px]" style={{ color: "#d0d0d0" }}>{dateLabel(auction)}</span> : null}
                   </span>
@@ -66,7 +66,7 @@ export function AuctionsPage() {
             })}
           </div>
         ) : (
-          <p className="mt-16 text-center text-[18px]">No auctions</p>
+          <p className="mt-16 text-center text-[18px]">{t("noAuctions")}</p>
         )}
       </div>
     </main>
