@@ -12,3 +12,11 @@ export const supabase: SupabaseClient | null = supabaseConfigured
 export function siteOrigin() {
   return import.meta.env.VITE_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
 }
+
+export function supabaseProjectHost() {
+  try {
+    return new URL(import.meta.env.VITE_SUPABASE_URL).host;
+  } catch {
+    return "";
+  }
+}

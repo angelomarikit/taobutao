@@ -8,7 +8,7 @@ import { ExhibitionsAdmin } from "@/admin/ExhibitionsAdmin";
 import { FooterAdmin } from "@/admin/FooterAdmin";
 import { PageEditor, ChooseFile } from "@/admin/PageEditor";
 import { aboutSections, contactSections, gallerySections, homeSections, journalSections, settingFields } from "@/admin/pageCatalog";
-import { siteOrigin, supabase, supabaseConfigured } from "@/lib/supabase";
+import { siteOrigin, supabase, supabaseConfigured, supabaseProjectHost } from "@/lib/supabase";
 
 type SessionState = {
   ready: boolean;
@@ -1116,10 +1116,13 @@ export function AdminApp() {
   if (!session.ready) return <main className="grid min-h-screen place-items-center text-sm">Checking session…</main>;
   if (!session.userId) return <Login />;
   if (!session.isAdmin) {
+    const host = supabaseProjectHost();
+    const sql = `insert into public.admin_profiles (user_id, full_name, role)\nvalues ('${session.userId}', 'Gallery Owner', 'owner')\non conflict (user_id) do update set role = 'owner';`;
     return (
-      <main className="mx-auto max-w-lg px-6 py-20 text-sm">
+      <main className="mx-auto max-w-xl px-6 py-20 text-sm text-white">
         <h1 className="text-2xl">This account is not an administrator.</h1>
-        <p className="mt-3">Add the signed-in user to <code>admin_profiles</code> in the SQL editor, then sign in again.</p>
+        <p className="mt-3 leading-6 text-neutral-300">Signed in as {session.email}. The SQL editor can say Success when the email matches no user, which adds no row. Run the statement below in {host || "the Supabase project this site is using"}, then reload this page.</p>
+        <pre className="mt-5 overflow-x-auto rounded-xl border border-white/15 bg-black/40 p-4 text-[13px] leading-6 text-white">{sql}</pre>
       </main>
     );
   }
