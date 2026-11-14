@@ -85,8 +85,9 @@ export function Navigation({
               <span className="h-px bg-white" />
             </span>
           </button>
-          <Link to="/" className="grid place-items-center text-white" aria-label={galleryName}>
-            <BrandMark className="h-9 min-[1100px]:h-11" />
+          <Link to="/" className="grid justify-items-center text-white" aria-label={galleryName}>
+            <BrandMark className="h-8 min-[1100px]:h-10" />
+            <span className="mt-1 text-[9px] tracking-[0.18em] whitespace-nowrap min-[1100px]:text-[11px] min-[1100px]:tracking-[0.28em]" style={{ fontFamily: "Inter, sans-serif", color: "#fff" }}>FINE ART @ AUCTION</span>
           </Link>
           <div className="flex items-center justify-self-end">
             <LanguageMenu />
