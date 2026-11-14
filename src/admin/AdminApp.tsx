@@ -17,6 +17,7 @@ type SessionState = {
   isAdmin: boolean;
   fullName: string | null;
   role: string | null;
+  profileError: string | null;
 };
 
 const emptySession: SessionState = {
@@ -26,6 +27,7 @@ const emptySession: SessionState = {
   isAdmin: false,
   fullName: null,
   role: null,
+  profileError: null,
 };
 
 function useAdminSession() {
@@ -44,7 +46,7 @@ function useAdminSession() {
         if (!ignore) setSession({ ...emptySession, ready: true });
         return;
       }
-      const { data: profile } = await supabase!
+      const { data: profile, error } = await supabase!
         .from("admin_profiles")
         .select("role, full_name")
         .eq("user_id", user.id)
@@ -57,6 +59,7 @@ function useAdminSession() {
           isAdmin: Boolean(profile),
           fullName: profile?.full_name ?? null,
           role: profile?.role ?? null,
+          profileError: error?.message ?? null,
         });
       }
     }
@@ -1117,11 +1120,19 @@ export function AdminApp() {
   if (!session.userId) return <Login />;
   if (!session.isAdmin) {
     const host = supabaseProjectHost();
-    const sql = `insert into public.admin_profiles (user_id, full_name, role)\nvalues ('${session.userId}', 'Gallery Owner', 'owner')\non conflict (user_id) do update set role = 'owner';`;
+    const sql = [
+      "grant select on table public.admin_profiles to authenticated;",
+      "",
+      "insert into public.admin_profiles (user_id, full_name, role)",
+      `values ('${session.userId}', 'Gallery Owner', 'owner')`,
+      "on conflict (user_id) do update set role = 'owner', full_name = excluded.full_name",
+      "returning user_id, role;",
+    ].join("\n");
     return (
       <main className="mx-auto max-w-xl px-6 py-20 text-sm text-white">
         <h1 className="text-2xl">This account is not an administrator.</h1>
-        <p className="mt-3 leading-6 text-neutral-300">Signed in as {session.email}. The SQL editor can say Success when the email matches no user, which adds no row. Run the statement below in {host || "the Supabase project this site is using"}, then reload this page.</p>
+        <p className="mt-3 leading-6 text-neutral-300">Signed in as {session.email}. Open the SQL editor for {host || "the Supabase project this site is using"}, run the statement below, and confirm the result shows this user id with role owner. Then reload this page.</p>
+        {session.profileError ? <p className="mt-3 text-red-300">{session.profileError}</p> : null}
         <pre className="mt-5 overflow-x-auto rounded-xl border border-white/15 bg-black/40 p-4 text-[13px] leading-6 text-white">{sql}</pre>
       </main>
     );
