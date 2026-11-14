@@ -222,21 +222,22 @@ function LanguageMenu() {
         </svg>
       </button>
       {open ? (
-        <div className="absolute right-0 top-full z-20 min-w-36 border border-white/15 bg-black py-1" role="listbox" aria-label={t("language")}>
+        <div className="absolute right-0 top-full z-20 max-h-[70vh] min-w-56 overflow-y-auto border border-white/15 bg-black py-1" role="listbox" aria-label={t("language")}>
           {languages.map((item) => (
             <button
               key={item.id}
               type="button"
               role="option"
               aria-selected={item.id === language}
-              className="block w-full px-4 py-2 text-left text-[13px] tracking-[0.08em]"
+              className="flex w-full items-baseline justify-between gap-6 px-4 py-2 text-left text-[13px]"
               style={{ color: item.id === language ? "#fff" : "#bdbdbd", fontFamily: "Inter, sans-serif" }}
               onClick={() => {
                 setLanguage(item.id);
                 setOpen(false);
               }}
             >
-              {item.name}
+              <span>{item.name}</span>
+              <span style={{ color: item.id === language ? "#fff" : "#8a8a8a" }}>{item.native}</span>
             </button>
           ))}
         </div>
